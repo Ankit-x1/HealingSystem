@@ -1,10 +1,11 @@
-"""
-PhoenixDT Core Module
-
-Clean, production-ready core components.
-"""
+"""PhoenixDT core module."""
 
 from .config import PhoenixConfig
-from .digital_twin import DigitalTwin
+from .digital_twin import DigitalTwin, MotorState, ControlSignal
 
-__all__ = ["PhoenixConfig", "DigitalTwin"]
+__all__ = [
+    "PhoenixConfig",
+    "DigitalTwin",
+    "MotorState",
+    "ControlSignal",
+]

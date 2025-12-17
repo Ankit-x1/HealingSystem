@@ -1,8 +1,4 @@
-"""
-PhoenixDT API Module
-
-Clean, production-ready REST API.
-"""
+"""PhoenixDT API module."""
 
 from .app import app
 
