@@ -2,9 +2,9 @@
 Performance tests for PhoenixDT API using Locust
 """
 
-from locust import HttpUser, task, between
-import json
 import random
+
+from locust import HttpUser, between, task
 
 
 class PhoenixDTUser(HttpUser):

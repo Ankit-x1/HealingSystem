@@ -6,20 +6,20 @@ AI-powered anomaly detection, and self-healing control.
 """
 
 from __future__ import annotations
-import asyncio
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, field
-from pathlib import Path
-import time
-from loguru import logger
-from concurrent.futures import ThreadPoolExecutor
 
-from .config import PhoenixConfig
-from .physics_engine import PhysicsSimulator
-from .neural_architectures import AdaptiveNeuralController
+import asyncio
+import time
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
+from loguru import logger
+
 from .causal_engine import CausalInferenceEngine
+from .config import PhoenixConfig
+from .neural_architectures import AdaptiveNeuralController
+from .physics_engine import PhysicsSimulator
 
 
 @dataclass
@@ -27,18 +27,18 @@ class TwinState:
     """Digital twin state snapshot"""
 
     timestamp: float
-    physical_state: Dict[str, float]
-    predicted_state: Dict[str, float]
-    control_actions: Dict[str, float]
-    anomalies: List[Dict[str, Any]]
-    health_metrics: Dict[str, float]
-    performance_metrics: Dict[str, float]
+    physical_state: dict[str, float]
+    predicted_state: dict[str, float]
+    control_actions: dict[str, float]
+    anomalies: list[dict[str, Any]]
+    health_metrics: dict[str, float]
+    performance_metrics: dict[str, float]
 
 
 class DigitalTwin:
     """Core digital twin engine integrating simulation, ML, and control"""
 
-    def __init__(self, config: Optional[PhoenixConfig] = None):
+    def __init__(self, config: PhoenixConfig | None = None):
         self.config = config or PhoenixConfig()
 
         # Initialize components
@@ -56,8 +56,8 @@ class DigitalTwin:
         self.causal_engine = CausalInferenceEngine(n_variables=8, max_lag=5)
 
         # State management
-        self.current_state: Optional[TwinState] = None
-        self.state_history: List[TwinState] = []
+        self.current_state: TwinState | None = None
+        self.state_history: list[TwinState] = []
         self.is_running = False
 
         # Performance metrics
@@ -71,11 +71,11 @@ class DigitalTwin:
 
         # Async management
         self._executor = ThreadPoolExecutor(max_workers=4)
-        self._tasks: List[asyncio.Task] = []
+        self._tasks: list[asyncio.Task] = []
 
         logger.info("Digital twin initialized")
 
-    async def start(self, duration: Optional[float] = None) -> None:
+    async def start(self, duration: float | None = None) -> None:
         """Start digital twin simulation"""
         logger.info(
             f"Starting digital twin simulation for {duration or 'indefinite'} seconds"
@@ -125,11 +125,11 @@ class DigitalTwin:
 
         logger.info("Digital twin stopped")
 
-    def get_current_state(self) -> Optional[TwinState]:
+    def get_current_state(self) -> TwinState | None:
         """Get current digital twin state"""
         return self.current_state
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get performance summary"""
         return {
             "uptime": self.metrics["uptime"],
@@ -252,21 +252,23 @@ class DigitalTwin:
 
     def _get_health_vector(self) -> np.ndarray:
         """Get health vector for neural controller"""
-        if self.current_state:
+        if self.current_state and hasattr(self.current_state, 'health_metrics'):
             health_metrics = self.current_state.health_metrics
             return np.array(
                 [
                     health_metrics.get("motor_health", 1.0),
                     health_metrics.get("bearing_health", 1.0),
-                    health_metrics.get("efficiency_health", 1.0),
-                    health_metrics.get("thermal_health", 1.0),
+                    health_metrics.get("winding_health", 1.0),
+                    health_metrics.get("efficiency", 1.0),
                 ]
             )
-        return np.ones(4)
+        else:
+            # Return default health vector when no state available
+            return np.array([1.0, 1.0, 1.0, 1.0])
 
     async def _predict_next_state(
-        self, current_state: Dict[str, float]
-    ) -> Dict[str, float]:
+        self, current_state: dict[str, float]
+    ) -> dict[str, float]:
         """Predict next state (simplified)"""
         # Simple prediction based on current state
         prediction = {}
@@ -276,8 +278,8 @@ class DigitalTwin:
         return prediction
 
     async def _detect_anomalies(
-        self, physical_state: Dict[str, float]
-    ) -> List[Dict[str, Any]]:
+        self, physical_state: dict[str, float]
+    ) -> list[dict[str, Any]]:
         """Detect anomalies in physical state"""
         anomalies = []
 
@@ -303,8 +305,8 @@ class DigitalTwin:
         return anomalies
 
     async def _calculate_health_metrics(
-        self, physical_state: Dict[str, float]
-    ) -> Dict[str, float]:
+        self, physical_state: dict[str, float]
+    ) -> dict[str, float]:
         """Calculate health metrics"""
         health_metrics = {}
 
@@ -334,7 +336,7 @@ class DigitalTwin:
 
         return health_metrics
 
-    async def _calculate_performance_metrics(self) -> Dict[str, float]:
+    async def _calculate_performance_metrics(self) -> dict[str, float]:
         """Calculate performance metrics"""
         return {
             "response_time": self.metrics["avg_response_time"],

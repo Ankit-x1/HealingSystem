@@ -5,16 +5,16 @@ Production-ready CLI for industrial digital twin.
 """
 
 from __future__ import annotations
-import asyncio
-import typer
-from pathlib import Path
-from typing import Optional
-from rich.console import Console
-from loguru import logger
 
+import asyncio
+from pathlib import Path
+
+import typer
+from rich.console import Console
+
+from .api.app import create_app, run_server
 from .core.config import PhoenixConfig
 from .core.digital_twin import DigitalTwin
-from .api.app import create_app, run_server
 
 # Create rich console
 console = Console()
@@ -30,7 +30,7 @@ app = typer.Typer(
 
 @app.command()
 def start(
-    config: Optional[Path] = typer.Option(
+    config: Path | None = typer.Option(
         None,
         "--config",
         "-c",
@@ -40,10 +40,10 @@ def start(
         dir_okay=False,
         readable=True,
     ),
-    duration: Optional[float] = typer.Option(
+    duration: float | None = typer.Option(
         None, "--duration", "-d", help="Simulation duration in seconds"
     ),
-):
+) -> None:
     """Start digital twin simulation"""
     try:
         # Load configuration
@@ -66,37 +66,37 @@ def start(
 
     except Exception as e:
         console.print(f"Error: {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @app.command()
 def serve(
-    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Server host"),
+    host: str = typer.Option("127.0.0.1", "--host", "-h", help="Server host"),
     port: int = typer.Option(8000, "--port", "-p", help="Server port"),
-    config: Optional[Path] = typer.Option(
+    config: Path | None = typer.Option(
         None, "--config", "-c", help="Configuration file path"
     ),
-):
+) -> None:
     """Start API server"""
     try:
         # Load configuration
         if config:
-            phoenix_config = PhoenixConfig.from_yaml(config)
+            _phoenix_config = PhoenixConfig.from_yaml(config)
         else:
-            phoenix_config = PhoenixConfig()
+            _phoenix_config = PhoenixConfig()
 
         # Start server
-        app = create_app()
+        _app = create_app()
         console.print(f"Starting server on {host}:{port}")
         run_server(host=host, port=port)
 
     except Exception as e:
         console.print(f"Error: {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @app.command()
-def status():
+def status() -> None:
     """Show system status"""
     console.print("PhoenixDT Industrial Digital Twin")
     console.print("Status: Ready")
@@ -106,10 +106,10 @@ def status():
 @app.command()
 def config(
     action: str = typer.Argument(..., help="Action: show, create-sample"),
-    output: Optional[Path] = typer.Option(
+    output: Path | None = typer.Option(
         None, "--output", "-o", help="Output file path"
     ),
-):
+) -> None:
     """Configuration management"""
     if action == "show":
         # Show default configuration

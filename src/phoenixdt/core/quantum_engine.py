@@ -7,17 +7,15 @@ quantum entanglement for correlation modeling.
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass
-import asyncio
 from loguru import logger
-from scipy.linalg import expm
-from scipy.special import factorial
-import time
 
 
 @dataclass
@@ -50,9 +48,9 @@ class QuantumStateEngine:
         )
 
         # Quantum state representation
-        self._quantum_state: Optional[torch.Tensor] = None
-        self._density_matrix: Optional[torch.Tensor] = None
-        self._hamiltonian: Optional[torch.Tensor] = None
+        self._quantum_state: torch.Tensor | None = None
+        self._density_matrix: torch.Tensor | None = None
+        self._hamiltonian: torch.Tensor | None = None
 
         # Quantum gates and operations
         self._hadamard_gate = self._create_hadamard_gate(state_dim)
@@ -60,8 +58,8 @@ class QuantumStateEngine:
         self._phase_gates = self._create_phase_gates(state_dim)
 
         # Coherence tracking
-        self._coherence_history: List[float] = []
-        self._entropy_history: List[float] = []
+        self._coherence_history: list[float] = []
+        self._entropy_history: list[float] = []
 
         # Quantum neural networks for state evolution
         self._evolution_net = QuantumEvolutionNetwork(state_dim)
@@ -89,7 +87,7 @@ class QuantumStateEngine:
         logger.info("Quantum engine initialized - ground state prepared")
 
     async def create_superposition_state(
-        self, classical_state: Dict[str, float]
+        self, classical_state: dict[str, float]
     ) -> torch.Tensor:
         """Create quantum superposition from classical state"""
         # Encode classical state into quantum amplitudes
@@ -135,7 +133,7 @@ class QuantumStateEngine:
         return evolved_state
 
     async def measure_state(
-        self, quantum_state: torch.Tensor, classical_state: Dict[str, float]
+        self, quantum_state: torch.Tensor, classical_state: dict[str, float]
     ) -> torch.Tensor:
         """Perform quantum measurement with collapse"""
         # Compute measurement probabilities
@@ -166,7 +164,7 @@ class QuantumStateEngine:
         future_states = []
         current_state = state.clone()
 
-        for step in range(steps):
+        for _step in range(steps):
             # Evolve state
             current_state = await self.evolve_state(current_state, dt=0.01)
 
@@ -235,7 +233,7 @@ class QuantumStateEngine:
 
     async def optimize_healing_strategy(
         self, current_state, anomaly_signature: np.ndarray
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Quantum optimization for healing strategy"""
         # Create quantum cost function
         cost_function = self._create_healing_cost_function(anomaly_signature)
@@ -247,11 +245,11 @@ class QuantumStateEngine:
         strategy = {
             "control_adjustments": optimal_params[: self.params.state_dim],
             "parameter_adjustments": dict(
-                zip(
-                    ["motor_speed", "torque", "current", "voltage"],
-                    optimal_params[self.params.state_dim : self.params.state_dim + 4],
-                )
-            ),
+                    zip(
+                        ["motor_speed", "torque", "current", "voltage"],
+                        optimal_params[self.params.state_dim : self.params.state_dim + 4],
+                    )
+                ),
             "neural_reconfig": optimal_params[self.params.state_dim + 4 :],
         }
 
@@ -294,22 +292,22 @@ class QuantumStateEngine:
 
         return hadamard
 
-    def _create_cnot_gates(self, n_qubits: int) -> List[torch.Tensor]:
+    def _create_cnot_gates(self, n_qubits: int) -> list[torch.Tensor]:
         """Create CNOT gates for entanglement"""
-        CNOT = torch.tensor(
+        _CNOT = torch.tensor(
             [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]],
             dtype=torch.complex64,
         )
 
         cnot_gates = []
-        for i in range(n_qubits - 1):
+        for _i in range(n_qubits - 1):
             # Create CNOT between qubit i and i+1
             cnot = torch.eye(2**n_qubits, dtype=torch.complex64)
             cnot_gates.append(cnot)
 
         return cnot_gates
 
-    def _create_phase_gates(self, n_qubits: int) -> List[torch.Tensor]:
+    def _create_phase_gates(self, n_qubits: int) -> list[torch.Tensor]:
         """Create phase gates"""
         phase_gates = []
         for i in range(n_qubits):
@@ -445,7 +443,7 @@ class QuantumStateEngine:
         return anomalies
 
     def _compute_classical_correction(
-        self, classical_state: Dict[str, float]
+        self, classical_state: dict[str, float]
     ) -> torch.Tensor:
         """Compute classical measurement back-action"""
         correction = torch.tensor(list(classical_state.values()), dtype=torch.complex64)

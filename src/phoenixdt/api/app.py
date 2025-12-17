@@ -5,27 +5,28 @@ Production-ready REST API with real-time WebSocket streaming.
 """
 
 from __future__ import annotations
+
 import asyncio
 import json
-import numpy as np
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any
 
+import numpy as np
+import uvicorn
 from fastapi import (
+    BackgroundTasks,
     FastAPI,
+    HTTPException,
     WebSocket,
     WebSocketDisconnect,
-    HTTPException,
-    BackgroundTasks,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, Field
-import uvicorn
 from loguru import logger
+from pydantic import BaseModel, Field
 
-from ..core.digital_twin import DigitalTwin
 from ..core.config import PhoenixConfig
+from ..core.digital_twin import DigitalTwin
 
 
 # Pydantic Models
@@ -42,9 +43,9 @@ class DigitalTwinStateResponse(BaseModel):
     """Digital twin state response"""
 
     timestamp: float
-    physical_state: Dict[str, float]
-    health_metrics: Dict[str, float]
-    anomalies: List[Dict[str, Any]] = Field(default_factory=list)
+    physical_state: dict[str, float]
+    health_metrics: dict[str, float]
+    anomalies: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class FaultInjectionRequest(BaseModel):
@@ -58,13 +59,13 @@ class ControlRequest(BaseModel):
     """Control request"""
 
     control_mode: str = Field(..., description="Control mode")
-    manual_voltage: Optional[List[float]] = Field(
+    manual_voltage: list[float] | None = Field(
         None, min_items=3, max_items=3, description="Manual 3-phase voltage"
     )
 
 
 # Global variables
-digital_twin: Optional[DigitalTwin] = None
+digital_twin: DigitalTwin | None = None
 
 
 # Create FastAPI app

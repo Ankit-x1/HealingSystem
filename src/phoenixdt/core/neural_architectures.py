@@ -10,16 +10,18 @@ Apple/Tesla-grade neural networks with:
 """
 
 from __future__ import annotations
+
+import asyncio
+import random
+from collections import deque
+from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from typing import Dict, List, Optional, Tuple, Any, Union
-from dataclasses import dataclass
-import asyncio
 from loguru import logger
-from collections import deque
-import random
 
 
 @dataclass
@@ -28,7 +30,7 @@ class NeuralConfig:
 
     input_dim: int
     output_dim: int
-    hidden_dims: List[int]
+    hidden_dims: list[int]
     activation: str = "swish"
     dropout_rate: float = 0.1
     batch_norm: bool = True
@@ -49,7 +51,7 @@ class AdaptiveNeuralController:
     - Uncertainty quantification
     """
 
-    def __init__(self, input_dim: int, output_dim: int, hidden_dims: List[int]):
+    def __init__(self, input_dim: int, output_dim: int, hidden_dims: list[int]):
         self.config = NeuralConfig(
             input_dim=input_dim, output_dim=output_dim, hidden_dims=hidden_dims
         )
@@ -98,7 +100,7 @@ class AdaptiveNeuralController:
         self.current_architecture = best_architecture
 
         # Initialize networks with best architecture
-        for name, network in self.control_networks.items():
+        for _name, network in self.control_networks.items():
             await network.apply_architecture(best_architecture)
 
         # Initialize meta-learner
@@ -109,7 +111,7 @@ class AdaptiveNeuralController:
     async def compute_control(
         self,
         quantum_state: torch.Tensor,
-        classical_state: Dict[str, float],
+        classical_state: dict[str, float],
         health_vector: torch.Tensor,
     ) -> torch.Tensor:
         """Compute optimal control policy using adaptive neural networks"""
@@ -167,8 +169,8 @@ class AdaptiveNeuralController:
         return optimal_control
 
     async def predict_future_states(
-        self, history: List, horizon_steps: int = 10
-    ) -> Dict[str, np.ndarray]:
+        self, history: list, horizon_steps: int = 10
+    ) -> dict[str, np.ndarray]:
         """Predict future states using temporal neural networks"""
 
         # Prepare sequence data
@@ -189,7 +191,7 @@ class AdaptiveNeuralController:
 
         return predictions
 
-    async def adapt_to_causal_changes(self, causal_changes: List[Dict]) -> None:
+    async def adapt_to_causal_changes(self, causal_changes: list[dict]) -> None:
         """Adapt neural networks to causal structure changes"""
 
         logger.info(f"Adapting to {len(causal_changes)} causal changes")
@@ -205,12 +207,12 @@ class AdaptiveNeuralController:
                 await self.load_architectures()
 
         # Fine-tune networks with new causal information
-        for name, network in self.control_networks.items():
+        for _name, network in self.control_networks.items():
             await network.adapt_to_causal_structure(causal_changes)
 
     async def generate_recommendations(
         self, metric: str, predictions: np.ndarray
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate recommendations using neural reasoning"""
 
         # Analyze prediction trends
@@ -244,13 +246,13 @@ class AdaptiveNeuralController:
 
         return recommendations
 
-    async def reconfigure(self, reconfig_params: Dict[str, Any]) -> None:
+    async def reconfigure(self, reconfig_params: dict[str, Any]) -> None:
         """Reconfigure neural networks based on healing strategy"""
 
         logger.info("Reconfiguring neural networks...")
 
         # Apply reconfiguration parameters
-        for name, network in self.control_networks.items():
+        for _name, network in self.control_networks.items():
             await network.apply_reconfiguration(reconfig_params)
 
         # Update meta-learner
@@ -269,8 +271,8 @@ class AdaptiveNeuralController:
 
     # Private methods
     async def _compute_ensemble_weights(
-        self, uncertainties: Dict[str, torch.Tensor]
-    ) -> Dict[str, float]:
+        self, uncertainties: dict[str, torch.Tensor]
+    ) -> dict[str, float]:
         """Compute ensemble weights based on uncertainties"""
 
         # Convert uncertainties to weights (inverse relationship)
@@ -310,7 +312,7 @@ class AdaptiveNeuralController:
 
         return safe_control
 
-    def _prepare_sequence_data(self, history: List) -> torch.Tensor:
+    def _prepare_sequence_data(self, history: list) -> torch.Tensor:
         """Prepare sequence data for temporal prediction"""
 
         # Extract features from history
@@ -331,7 +333,7 @@ class AdaptiveNeuralController:
 
     async def _analyze_prediction_trends(
         self, predictions: np.ndarray
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Analyze prediction trends"""
 
         # Compute trend
@@ -347,19 +349,17 @@ class AdaptiveNeuralController:
         risk_score = abs(trend) * volatility
 
         return {
-            "trend": "increasing"
-            if trend > 0
-            else "decreasing"
-            if trend < 0
-            else "stable",
+            "trend": (
+                "increasing" if trend > 0 else "decreasing" if trend < 0 else "stable"
+            ),
             "trend_magnitude": float(trend),
             "volatility": float(volatility),
             "risk_score": float(risk_score),
         }
 
     async def _generate_system_recommendations(
-        self, metric: str, trend_analysis: Dict
-    ) -> List[str]:
+        self, metric: str, trend_analysis: dict
+    ) -> list[str]:
         """Generate system-specific recommendations"""
 
         recommendations = []
@@ -391,7 +391,7 @@ class AdaptiveNeuralController:
 class NeuralArchitectureSearchController:
     """Neural Architecture Search for optimal control networks"""
 
-    def __init__(self, input_dim: int, output_dim: int, hidden_dims: List[int]):
+    def __init__(self, input_dim: int, output_dim: int, hidden_dims: list[int]):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.hidden_dims = hidden_dims
@@ -412,14 +412,14 @@ class NeuralArchitectureSearchController:
         self.mutation_rate = 0.1
         self.crossover_rate = 0.7
 
-    async def search_optimal_architecture(self) -> Dict[str, Any]:
+    async def search_optimal_architecture(self) -> dict[str, Any]:
         """Search for optimal neural architecture"""
 
         # Initialize population
         population = self._initialize_population()
 
         # Evolutionary search
-        for generation in range(50):  # 50 generations
+        for _generation in range(50):  # 50 generations
             # Evaluate fitness
             fitness_scores = []
             for architecture in population:
@@ -455,8 +455,8 @@ class NeuralArchitectureSearchController:
         return population[best_idx]
 
     async def adapt_to_causal_changes(
-        self, causal_changes: List[Dict], current_architecture: Dict
-    ) -> Dict[str, Any]:
+        self, causal_changes: list[dict], current_architecture: dict
+    ) -> dict[str, Any]:
         """Adapt architecture to causal changes"""
 
         # Analyze impact of causal changes
@@ -479,7 +479,7 @@ class NeuralArchitectureSearchController:
         return adapted_architecture
 
     # Private NAS methods
-    def _initialize_population(self) -> List[Dict]:
+    def _initialize_population(self) -> list[dict]:
         """Initialize random population"""
         population = []
         for _ in range(self.population_size):
@@ -489,7 +489,7 @@ class NeuralArchitectureSearchController:
             population.append(architecture)
         return population
 
-    async def _evaluate_architecture(self, architecture: Dict) -> float:
+    async def _evaluate_architecture(self, architecture: dict) -> float:
         """Evaluate architecture fitness"""
 
         # Create test network
@@ -522,8 +522,8 @@ class NeuralArchitectureSearchController:
         return float(fitness)
 
     def _tournament_selection(
-        self, population: List[Dict], fitness: List[float]
-    ) -> List[Dict]:
+        self, population: list[dict], fitness: list[float]
+    ) -> list[dict]:
         """Tournament selection"""
         selected = []
         for _ in range(len(population)):
@@ -537,7 +537,7 @@ class NeuralArchitectureSearchController:
 
         return selected
 
-    def _crossover(self, parent1: Dict, parent2: Dict) -> Tuple[Dict, Dict]:
+    def _crossover(self, parent1: dict, parent2: dict) -> tuple[dict, dict]:
         """Crossover operation"""
         child1, child2 = {}, {}
 
@@ -551,7 +551,7 @@ class NeuralArchitectureSearchController:
 
         return child1, child2
 
-    def _mutate(self, architecture: Dict) -> Dict:
+    def _mutate(self, architecture: dict) -> dict:
         """Mutation operation"""
         mutated = architecture.copy()
 
@@ -606,7 +606,7 @@ class AdaptiveControlNetwork(nn.Module):
 
         return layers
 
-    async def apply_architecture(self, architecture: Dict) -> None:
+    async def apply_architecture(self, architecture: dict) -> None:
         """Apply new architecture"""
         # Rebuild network with new architecture
         self.config = NeuralConfig(
@@ -624,7 +624,7 @@ class AdaptiveControlNetwork(nn.Module):
 
     async def predict_with_uncertainty(
         self, x: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Predict with uncertainty quantification"""
         # Forward pass
         output = x
@@ -649,12 +649,12 @@ class AdaptiveControlNetwork(nn.Module):
 
         return mean_pred, uncertainty
 
-    async def adapt_to_causal_structure(self, causal_changes: List[Dict]) -> None:
+    async def adapt_to_causal_structure(self, causal_changes: list[dict]) -> None:
         """Adapt to causal structure changes"""
         # This would implement specific adaptations based on causal changes
         pass
 
-    async def apply_reconfiguration(self, reconfig_params: Dict[str, Any]) -> None:
+    async def apply_reconfiguration(self, reconfig_params: dict[str, Any]) -> None:
         """Apply reconfiguration parameters"""
         # Apply reconfiguration to network parameters
         pass
@@ -694,7 +694,7 @@ class MetaLearner:
         # Simplified meta-learning
         return torch.zeros_like(control) * 0.01
 
-    async def update_parameters(self, params: Dict[str, Any]) -> None:
+    async def update_parameters(self, params: dict[str, Any]) -> None:
         """Update meta-learner parameters"""
         pass
 
@@ -729,7 +729,7 @@ class MultiModalAttention(nn.Module):
 class UncertaintyEstimator(nn.Module):
     """Uncertainty estimation network"""
 
-    def __init__(self, input_dim: int, output_dim: int, hidden_dims: List[int]):
+    def __init__(self, input_dim: int, output_dim: int, hidden_dims: list[int]):
         super().__init__()
         layers = []
 

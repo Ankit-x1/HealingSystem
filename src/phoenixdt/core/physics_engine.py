@@ -10,16 +10,14 @@ Apple/Tesla-grade physics simulation with:
 """
 
 from __future__ import annotations
-import numpy as np
-import torch
-import torch.nn as nn
-from typing import Dict, List, Optional, Tuple, Any, Union
+
+import time
 from dataclasses import dataclass, field
-import asyncio
+from typing import Any
+
+import numpy as np
 from loguru import logger
 from scipy.integrate import solve_ivp
-from scipy.interpolate import interp1d
-import time
 
 
 @dataclass
@@ -153,7 +151,7 @@ class PhysicsSimulator:
         self.m_stator = 10.0  # Mass (kg)
         self.m_bearing = 2.0  # Mass (kg)
 
-    def _initialize_sensor_models(self) -> Dict[str, Any]:
+    def _initialize_sensor_models(self) -> dict[str, Any]:
         """Initialize sensor noise models"""
         return {
             "current_sensor": SensorModel(
@@ -199,8 +197,8 @@ class PhysicsSimulator:
         logger.info("Physics simulator initialization complete")
 
     async def step(
-        self, control_input: Optional[np.ndarray] = None
-    ) -> Dict[str, float]:
+        self, control_input: np.ndarray | None = None
+    ) -> dict[str, float]:
         """Perform one physics simulation step"""
         step_start = time.time()
 
@@ -242,7 +240,7 @@ class PhysicsSimulator:
 
         return sensed_state
 
-    def get_state_dict(self) -> Dict[str, float]:
+    def get_state_dict(self) -> dict[str, float]:
         """Get current state as dictionary"""
         return {
             "speed_rpm": self.state["omega"] * 60 / (2 * np.pi),
@@ -263,11 +261,11 @@ class PhysicsSimulator:
             "lubrication_quality": self.degradation["bearing_lubrication"],
         }
 
-    def get_initial_conditions(self) -> Dict[str, float]:
+    def get_initial_conditions(self) -> dict[str, float]:
         """Get initial conditions for quantum state"""
         return self.get_state_dict()
 
-    async def adjust_parameters(self, adjustments: Dict[str, Any]) -> None:
+    async def adjust_parameters(self, adjustments: dict[str, Any]) -> None:
         """Adjust simulation parameters"""
         for param, value in adjustments.items():
             if hasattr(self.motor_params, param):
@@ -318,7 +316,7 @@ class PhysicsSimulator:
         )
 
     # Private physics methods
-    async def _runge_kutta_45_step(self, dt: float) -> Dict[str, float]:
+    async def _runge_kutta_45_step(self, dt: float) -> dict[str, float]:
         """Runge-Kutta 4th order integration step"""
 
         def derivatives(t, y):
@@ -327,7 +325,7 @@ class PhysicsSimulator:
             theta, omega, i_a, i_b, i_c, temp_s, temp_r, temp_b = y
 
             # Electrical equations (simplified)
-            v_a, v_b, v_c = self.state["v_a"], self.state["v_b"], self.state["v_c"]
+            v_a, v_b, _v_c = self.state["v_a"], self.state["v_b"], self.state["v_c"]
 
             # Clarke transformation
             i_alpha = i_a
@@ -424,7 +422,7 @@ class PhysicsSimulator:
             "v_c": self.state["v_c"],
         }
 
-    async def _quantum_integration_step(self, dt: float) -> Dict[str, float]:
+    async def _quantum_integration_step(self, dt: float) -> dict[str, float]:
         """Quantum-enhanced integration step"""
         # Use quantum-inspired numerical integration
         # This would implement quantum Runge-Kutta or other quantum algorithms
@@ -432,7 +430,7 @@ class PhysicsSimulator:
         # For now, fall back to RK45
         return await self._runge_kutta_45_step(dt)
 
-    async def _euler_step(self, dt: float) -> Dict[str, float]:
+    async def _euler_step(self, dt: float) -> dict[str, float]:
         """Simple Euler integration step"""
         # Simplified Euler method for comparison
         new_state = self.state.copy()
@@ -475,7 +473,7 @@ class PhysicsSimulator:
             self.degradation["winding_insulation"] + aging_rate * dt, 1.0
         )
 
-    async def _apply_sensor_models(self, state: Dict[str, float]) -> Dict[str, float]:
+    async def _apply_sensor_models(self, state: dict[str, float]) -> dict[str, float]:
         """Apply sensor noise and dynamics"""
         sensed_state = state.copy()
 
@@ -520,10 +518,10 @@ class PhysicsSimulator:
     def _compute_efficiency(self) -> float:
         """Compute motor efficiency"""
         # Mechanical power output
-        P_mech = self.state["torque"] * self.state["omega"]
+        _P_mech = self.state["torque"] * self.state["omega"]
 
         # Electrical power input
-        P_elec = (
+        _P_elec = (
             self.state["v_a"] * self.state["i_a"]
             + self.state["v_b"] * self.state["i_b"]
             + self.state["v_c"] * self.state["i_c"]
@@ -569,7 +567,7 @@ class AdaptiveTimestepController:
         self.target_error = 1e-6
         self.safety_factor = 0.9
 
-    async def select_timestep(self, state: Dict, degradation: Dict) -> float:
+    async def select_timestep(self, state: dict, degradation: dict) -> float:
         """Select optimal timestep based on system dynamics"""
         # Estimate local dynamics
         omega = abs(state.get("omega", 0))
@@ -606,7 +604,7 @@ class SensorModel:
     bias: float
     delay: float
     quantization: float
-    history: List[float] = field(default_factory=list)
+    history: list[float] = field(default_factory=list)
 
     def apply(self, true_value: float) -> float:
         """Apply sensor model to true value"""

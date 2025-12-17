@@ -5,12 +5,12 @@ Production-ready configuration for industrial digital twin.
 """
 
 from __future__ import annotations
-from typing import Dict, List, Any, Optional, Union
-from pathlib import Path
-import yaml
-from pydantic import BaseModel, Field, validator
-from pydantic_settings import BaseSettings
+
 from enum import Enum
+from pathlib import Path
+
+import yaml
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class IntegrationMethod(str, Enum):
@@ -54,11 +54,11 @@ class ControlConfig(BaseModel):
     control_frequency: float = Field(
         default=100.0, description="Control frequency in Hz"
     )
-    safety_limits: Dict[str, float] = Field(
+    safety_limits: dict[str, float] = Field(
         default={"max_current": 50.0, "max_temperature": 120.0, "max_vibration": 10.0},
         description="Safety limits for control variables",
     )
-    pid_gains: Dict[str, float] = Field(
+    pid_gains: dict[str, float] = Field(
         default={"kp": 1.0, "ki": 0.1, "kd": 0.01}, description="PID controller gains"
     )
 
@@ -80,26 +80,27 @@ class PhoenixConfig(BaseModel):
     control: ControlConfig = Field(default_factory=ControlConfig)
     interface: InterfaceConfig = Field(default_factory=InterfaceConfig)
 
-    class Config:
-        env_prefix = "PHOENIXDT"
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_prefix="PHOENIXDT",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False
+    )
 
     @classmethod
-    def from_yaml(cls, config_path: Union[str, Path]) -> "PhoenixConfig":
+    def from_yaml(cls, config_path: str | Path) -> PhoenixConfig:
         """Load configuration from YAML file"""
         config_path = Path(config_path)
 
         if not config_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             config_data = yaml.safe_load(f)
 
         return cls(**config_data)
 
-    def to_yaml(self, config_path: Optional[Union[str, Path]] = None) -> str:
+    def to_yaml(self, config_path: str | Path | None = None) -> str:
         """Export configuration to YAML string"""
         config_dict = self.dict()
 

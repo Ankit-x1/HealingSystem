@@ -10,18 +10,15 @@ Apple/Tesla-grade causal modeling with:
 """
 
 from __future__ import annotations
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Dict, List, Optional, Tuple, Any, Set
-from dataclasses import dataclass
+
 import asyncio
-from loguru import logger
-from scipy.stats import pearsonr
-from sklearn.preprocessing import StandardScaler
-import networkx as nx
+from dataclasses import dataclass
 from enum import Enum
+from typing import Any
+
+import networkx as nx
+import numpy as np
+from loguru import logger
 
 
 class CausalChangeType(Enum):
@@ -43,7 +40,7 @@ class CausalEdge:
     strength: float
     confidence: float
     lag: int = 0
-    mechanism: Optional[str] = None
+    mechanism: str | None = None
     uncertainty: float = 0.0
 
 
@@ -91,7 +88,7 @@ class CausalInferenceEngine:
         self.uncertainty_estimator = CausalUncertaintyEstimator(n_variables)
 
         # Real-time adaptation
-        self.causal_history: List[Dict] = []
+        self.causal_history: list[dict] = []
         self.change_detector = CausalChangeDetector()
 
         # Variable names (for interpretability)
@@ -136,9 +133,11 @@ class CausalInferenceEngine:
         # Add to history
         self.causal_history.append(
             {
-                "timestamp": state.timestamp
-                if hasattr(state, "timestamp")
-                else asyncio.get_event_loop().time(),
+                "timestamp": (
+                    state.timestamp
+                    if hasattr(state, "timestamp")
+                    else asyncio.get_event_loop().time()
+                ),
                 "state": state_vector.copy(),
             }
         )
@@ -151,7 +150,7 @@ class CausalInferenceEngine:
         if len(self.causal_history) >= 50:
             await self._update_causal_structure()
 
-    async def get_current_causal_graph(self) -> Dict[str, float]:
+    async def get_current_causal_graph(self) -> dict[str, float]:
         """Get current causal graph as dictionary"""
         causal_dict = {}
 
@@ -163,7 +162,7 @@ class CausalInferenceEngine:
 
         return causal_dict
 
-    async def detect_causal_changes(self) -> List[CausalChange]:
+    async def detect_causal_changes(self) -> list[CausalChange]:
         """Detect changes in causal structure"""
         if len(self.causal_history) < 100:
             return []
@@ -210,7 +209,7 @@ class CausalInferenceEngine:
 
         return changes
 
-    async def get_causal_factors(self, metric: str) -> List[str]:
+    async def get_causal_factors(self, metric: str) -> list[str]:
         """Get causal factors for a specific metric"""
         if metric not in self.variable_names:
             return []
@@ -233,7 +232,7 @@ class CausalInferenceEngine:
 
         return list(set(causal_factors))
 
-    async def explain_anomaly(self, anomaly_state: Dict[str, float]) -> Dict[str, Any]:
+    async def explain_anomaly(self, anomaly_state: dict[str, float]) -> dict[str, Any]:
         """Explain anomaly using causal inference"""
         explanation = {
             "root_causes": [],
@@ -263,20 +262,20 @@ class CausalInferenceEngine:
                 explanation["root_causes"].extend(root_causes)
 
             # Generate recommendations
-            explanation[
-                "recommendations"
-            ] = await self._generate_causal_recommendations(
-                anomalous_vars, explanation["root_causes"]
+            explanation["recommendations"] = (
+                await self._generate_causal_recommendations(
+                    anomalous_vars, explanation["root_causes"]
+                )
             )
 
             # Compute confidence and uncertainty
             explanation["confidence"] = await self._compute_explanation_confidence(
                 anomalous_vars, explanation["root_causes"]
             )
-            explanation[
-                "uncertainty"
-            ] = await self.uncertainty_estimator.estimate_explanation_uncertainty(
-                explanation
+            explanation["uncertainty"] = (
+                await self.uncertainty_estimator.estimate_explanation_uncertainty(
+                    explanation
+                )
             )
 
         except Exception as e:
@@ -319,8 +318,8 @@ class CausalInferenceEngine:
         await self._update_causal_graph(combined_edges)
 
     async def _combine_discoveries(
-        self, quantum_edges: List[CausalEdge], classical_edges: List[CausalEdge]
-    ) -> List[CausalEdge]:
+        self, quantum_edges: list[CausalEdge], classical_edges: list[CausalEdge]
+    ) -> list[CausalEdge]:
         """Combine quantum and classical discoveries"""
 
         # Create edge dictionary for combination
@@ -362,7 +361,7 @@ class CausalInferenceEngine:
 
         return list(edge_dict.values())
 
-    async def _update_causal_graph(self, edges: List[CausalEdge]) -> None:
+    async def _update_causal_graph(self, edges: list[CausalEdge]) -> None:
         """Update networkx causal graph"""
         # Clear existing edges
         self.causal_graph.clear_edges()
@@ -390,7 +389,7 @@ class CausalInferenceEngine:
                 # Update adjacency matrix
                 self.adjacency_matrix[source_idx, target_idx] = edge.strength
 
-    async def _compute_baseline_edges(self) -> Set[Tuple[int, int]]:
+    async def _compute_baseline_edges(self) -> set[tuple[int, int]]:
         """Compute baseline causal edges from history"""
         if len(self.causal_history) < 200:
             return set(self.causal_graph.edges())
@@ -416,7 +415,7 @@ class CausalInferenceEngine:
 
         return edge_set
 
-    async def _compute_edge_impact(self, edge: Tuple[int, int]) -> float:
+    async def _compute_edge_impact(self, edge: tuple[int, int]) -> float:
         """Compute impact score for an edge"""
         # Use centrality measures for impact
         source_centrality = nx.betweenness_centrality(self.causal_graph).get(
@@ -435,8 +434,8 @@ class CausalInferenceEngine:
         return float(impact)
 
     async def _trace_root_causes(
-        self, anomalous_var: str, anomaly_state: Dict[str, float]
-    ) -> List[Dict]:
+        self, anomalous_var: str, anomaly_state: dict[str, float]
+    ) -> list[dict]:
         """Trace root causes for anomalous variable"""
         if anomalous_var not in self.variable_names:
             return []
@@ -480,8 +479,8 @@ class CausalInferenceEngine:
         return root_causes[:5]  # Return top 5 root causes
 
     async def _generate_causal_recommendations(
-        self, anomalous_vars: List[str], root_causes: List[Dict]
-    ) -> List[str]:
+        self, anomalous_vars: list[str], root_causes: list[dict]
+    ) -> list[str]:
         """Generate recommendations based on causal analysis"""
         recommendations = []
 
@@ -516,7 +515,7 @@ class CausalInferenceEngine:
         return recommendations[:10]  # Return top 10 recommendations
 
     async def _compute_explanation_confidence(
-        self, anomalous_vars: List[str], root_causes: List[Dict]
+        self, anomalous_vars: list[str], root_causes: list[dict]
     ) -> float:
         """Compute confidence in explanation"""
         if not root_causes:
@@ -568,7 +567,7 @@ class QuantumCausalDiscoverer:
         """Initialize quantum causal discovery"""
         pass
 
-    async def discover_causal_structure(self, data: np.ndarray) -> List[CausalEdge]:
+    async def discover_causal_structure(self, data: np.ndarray) -> list[CausalEdge]:
         """Discover causal structure using quantum algorithms"""
         # Simplified quantum causal discovery
         edges = []
@@ -604,7 +603,7 @@ class ClassicalCausalDiscoverer:
         """Initialize classical discoverer"""
         pass
 
-    async def discover_causal_structure(self, data: np.ndarray) -> List[CausalEdge]:
+    async def discover_causal_structure(self, data: np.ndarray) -> list[CausalEdge]:
         """Discover causal structure using classical algorithms"""
         edges = []
 
@@ -657,7 +656,7 @@ class CausalUncertaintyEstimator:
     def __init__(self, n_variables: int):
         self.n_variables = n_variables
 
-    async def estimate_explanation_uncertainty(self, explanation: Dict) -> float:
+    async def estimate_explanation_uncertainty(self, explanation: dict) -> float:
         """Estimate uncertainty in causal explanation"""
         # Simplified uncertainty estimation
         return 0.1  # Placeholder

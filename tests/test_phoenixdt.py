@@ -2,9 +2,11 @@
 Test suite for PhoenixDT Industrial Digital Twin
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
+
+import pytest
+
 from phoenixdt.core.config import PhoenixConfig
 from phoenixdt.core.digital_twin import DigitalTwin
 
@@ -90,6 +92,7 @@ class TestAPI:
     def client(self):
         """Create test client"""
         from fastapi.testclient import TestClient
+
         from phoenixdt.api.app import create_app
 
         return TestClient(create_app())
