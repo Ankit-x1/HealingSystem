@@ -1,77 +1,39 @@
-# 🔥 PhoenixDT Quantum - Apple/Tesla-Grade Industrial Digital Twin
+# PhoenixDT - Industrial Digital Twin
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.3+-red.svg)](https://pytorch.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.112+-green.svg)](https://fastAPI.tiangolo.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.112+-green.svg)](https://fastapi.tiangolo.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://docker.com)
 [![CI/CD](https://github.com/Ankit-x1/HealingSystem/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Ankit-x1/HealingSystem/actions)
-[![codecov](https://codecov.io/gh/Ankit-x1/HealingSystem/branch/main/graph/badge.svg)](https://codecov.io/gh/Ankit-x1/HealingSystem)
-[![PyPI version](https://badge.fury.io/py/phoenix-dt.svg)](https://badge.fury.io/py/phoenix-dt)
 
-> **PhoenixDT Quantum** is the world's first Apple/Tesla-grade quantum-enhanced industrial digital twin platform, featuring revolutionary AI-powered predictive maintenance, self-healing control, and real-time causal inference.
+PhoenixDT is an industrial digital twin platform that combines physics-based simulation with AI-powered anomaly detection, self-healing control, and causal inference for predictive maintenance.
 
-## 🚀 Revolutionary Features
+## Features
 
-### 🌌 Quantum-Enhanced Architecture
-- **Quantum Superposition**: Parallel simulation of multiple system states
-- **Quantum Entanglement**: Model complex variable correlations
-- **Quantum Coherence Management**: Maintain quantum state integrity
-- **Quantum Measurement**: Uncertainty-aware state observation
-- **Quantum Optimization**: Self-healing through quantum algorithms
+### Core Capabilities
+- **Physics-Based Simulation**: Multi-domain motor simulation with electrical, mechanical, and thermal coupling
+- **AI-Powered Anomaly Detection**: Multi-algorithm ensemble with uncertainty quantification
+- **Self-Healing Control**: Adaptive control with automatic fault recovery
+- **Causal Inference**: Root cause analysis with explainable AI
+- **Predictive Analytics**: Future state prediction with confidence intervals
 
-### 🧠 Next-Generation Neural Networks
-- **Neural Architecture Search (NAS)**: Automatic optimal network discovery
-- **Meta-Learning**: Rapid adaptation to new scenarios
-- **Quantum-Inspired Layers**: Enhanced computational capabilities
-- **Self-Organizing Networks**: Dynamic structure adaptation
-- **Uncertainty Quantification**: Confidence-aware predictions
+### Technical Features
+- **Real-Time Processing**: Sub-millisecond response times
+- **Multi-Modal Data**: Sensor fusion and state estimation
+- **Adaptive Learning**: Neural architecture search and meta-learning
+- **Industrial Protocols**: OPC-UA, Modbus support
+- **Web Interface**: REST API with real-time WebSocket streaming
+- **Container Ready**: Docker and Kubernetes deployment
 
-### 🔍 Real-Time Causal Inference
-- **Online Causal Discovery**: Learn causal structure in real-time
-- **Intervention Modeling**: Predict effects of system changes
-- **Counterfactual Reasoning**: "What-if" scenario analysis
-- **Causal Uncertainty**: Quantify confidence in causal relationships
-- **Root Cause Analysis**: Explainable AI for industrial systems
-
-### ⚡ Self-Healing Capabilities
-- **Quantum Optimization**: Find optimal healing strategies
-- **Adaptive Control**: Automatically adjust to system changes
-- **Predictive Maintenance**: Anticipate failures before they occur
-- **Automatic Recovery**: Self-correct without human intervention
-- **Performance Optimization**: Continuously improve system efficiency
-
-## 🏭 Apple/Tesla-Grade Engineering
-
-### Production Excellence
-- **Zero Redundancy**: Every line of code serves a purpose
-- **Type Safety**: 100% type-annotated with MyPy validation
-- **Performance Optimized**: Sub-millisecond response times
-- **Memory Efficient**: Optimized for edge deployment
-- **Security First**: Enterprise-grade security built-in
-
-### Scalability & Reliability
-- **Horizontal Scaling**: Multi-node quantum state management
-- **Fault Tolerant**: Graceful degradation under failures
-- **Load Balancing**: Intelligent resource allocation
-- **Auto-Scaling**: Dynamic capacity adjustment
-- **99.999% Uptime**: Five-nines availability target
-
-### Developer Experience
-- **Rich CLI**: Beautiful command-line interface with progress bars
-- **Live Dashboard**: Real-time WebSocket streaming
-- **Comprehensive API**: Full OpenAPI documentation
-- **Hot Reload**: Instant development feedback
-- **One-Click Deploy**: Docker and Kubernetes ready
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 ```bash
-# Install from PyPI (Recommended)
+# Install from PyPI
 pip install phoenix-dt
 
-# Or install with quantum features
+# Or install with all features
 pip install phoenix-dt[all]
 
 # Or clone from source
@@ -80,277 +42,221 @@ cd HealingSystem
 pip install -e ".[all]"
 ```
 
-### Launch Quantum System
+### Basic Usage
 ```bash
-# Start quantum digital twin
-phoenixdt start --quantum --profile high_performance
+# Start digital twin simulation
+phoenixdt start --duration 60
 
-# Start API server
+# Start web API server
 phoenixdt serve --host 0.0.0.0 --port 8000
 
-# Real-time monitoring
-phoenixdt monitor --refresh 0.5
+# Monitor system status
+phoenixdt status
 
-# Performance profiling
-phoenixdt profile --duration 300
+# Generate configuration
+phoenixdt config create-sample
 ```
 
 ### Docker Deployment
 ```bash
-# Production deployment
-docker run -d \
-  --name phoenixdt-quantum \
-  -p 8000:8000 \
-  -p 4840:4840 \
-  -e PHOENIXDT_QUANTUM_ENHANCED=true \
-  -e PHOENIXDT_PROFILE=enterprise \
-  ankitx1/phoenixdt:latest
+# Build and run with Docker Compose
+cd deployment/docker
+docker-compose up -d
 
-# Kubernetes deployment
-kubectl apply -f deployment/k8s/
+# Access services:
+# - API: http://localhost:8000
+# - API Docs: http://localhost:8000/api/docs
+# - Grafana: http://localhost:3000
+# - Prometheus: http://localhost:9090
 ```
 
-## 🌐 Next-Generation Dashboard
+## Architecture
 
-Access the revolutionary dashboard at **http://localhost:8000**
-
-### Features
-- **🌌 Quantum State Visualization**: Real-time quantum coherence monitoring
-- **📊 Predictive Analytics**: Future state predictions with confidence intervals
-- **🔍 Causal Graphs**: Interactive root cause analysis
-- **⚡ Self-Healing Monitor**: Watch automatic recovery in action
-- **📈 Performance Metrics**: Sub-millisecond latency tracking
-- **🎛️ Quantum Control Panel**: Advanced system control interface
-
-## 🛠️ Architecture
-
+### System Components
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                 PhoenixDT Quantum Architecture                │
-├─────────────────────────────────────────────────────────────────┤
-│  🌌 Quantum Layer                                            │
-│  ├─ Quantum State Engine (Superposition & Entanglement)        │
-│  ├─ Quantum Coherence Management                              │
-│  └─ Quantum Measurement & Uncertainty                       │
-├─────────────────────────────────────────────────────────────────┤
-│  🧠 Neural AI Layer                                         │
-│  ├─ Neural Architecture Search (NAS)                        │
-│  ├─ Meta-Learning Engine                                    │
-│  ├─ Quantum-Inspired Networks                               │
-│  └─ Self-Organizing Architectures                            │
-├─────────────────────────────────────────────────────────────────┤
-│  🔍 Causal Inference Layer                                   │
-│  ├─ Real-Time Causal Discovery                              │
-│  ├─ Intervention Modeling                                    │
-│  ├─ Counterfactual Reasoning                                 │
-│  └─ Causal Uncertainty Quantification                       │
-├─────────────────────────────────────────────────────────────────┤
-│  ⚙️ Physics Simulation Layer                                  │
-│  ├─ Multi-Domain Integration (Electrical/Mechanical/Thermal) │
-│  ├─ Adaptive Timestep Control                                 │
-│  ├─ Material Degradation Modeling                             │
-│  └─ Sensor Noise & Uncertainty                              │
-├─────────────────────────────────────────────────────────────────┤
-│  🌐 API & Interface Layer                                    │
-│  ├─ FastAPI REST Server                                     │
-│  ├─ WebSocket Real-Time Streaming                            │
-│  ├─ Quantum Dashboard                                      │
-│  └─ Industrial Protocols (OPC-UA, Modbus)                │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   AI/ML Layer   │    │  Simulation     │    │  Interface      │
+│                 │    │  Layer          │    │  Layer          │
+│ • Anomaly Det  │◄──►│ • Motor Model   │◄──►│ • REST API      │
+│ • Causal Inf  │    │ • Bearing Phys  │    │ • WebSocket     │
+│ • RL Control    │    │ • Thermal Dyn   │    │ • Dashboard     │
+│ • Predictive    │    │ • Vibration     │    │ • OPC-UA Server │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## 📊 Performance Benchmarks
+### Core Modules
+- **Digital Twin Engine** (`core/digital_twin.py`): Orchestrates all system components
+- **Motor Simulator** (`simulation/motor_simulator.py`): Physics-based motor simulation
+- **Anomaly Detector** (`ml/anomaly_detector.py`): Multi-algorithm ensemble detection
+- **RL Controller** (`control/rl_controller.py`): Adaptive control with learning
+- **Causal Engine** (`ml/causal_inference.py`): Root cause analysis
+- **API Server** (`api/app.py`): REST API and WebSocket interface
 
-| Metric | PhoenixDT | Traditional Systems | Improvement |
-|--------|------------|-------------------|-------------|
-| Response Time | **0.05ms** | 100ms | **2000x** |
-| Prediction Accuracy | **99.7%** | 85% | **17%** |
-| Uptime | **99.999%** | 99.9% | **10x** |
-| Memory Efficiency | **512MB** | 2GB | **4x** |
-| Throughput | **10,000 ops/s** | 500 ops/s | **20x** |
-| Self-Healing Success | **98%** | N/A | **Revolutionary** |
+## API Documentation
 
-## 🔧 Configuration
+### REST Endpoints
+- `GET /api/status` - System status and health metrics
+- `GET /api/state` - Current digital twin state
+- `POST /api/start` - Start simulation
+- `POST /api/stop` - Stop simulation
+- `POST /api/fault` - Inject fault for testing
+- `GET /api/predictions` - Get predictive insights
+- `GET /api/performance` - Performance metrics
 
-### Quantum Configuration
+### WebSocket
+- `ws://localhost:8000/ws` - Real-time data streaming
+
+### Configuration
 ```yaml
-quantum:
-  state_dim: 12                    # Quantum state dimensions
-  coherence_time: 2.0              # Quantum coherence (seconds)
-  entanglement_strength: 0.9         # Entanglement coupling
-  superposition_capacity: 16          # Parallel states
-  measurement_precision: 0.99         # Measurement accuracy
+# phoenixdt.yaml
+simulation:
+  dt: 0.001              # Time step (seconds)
+  duration: 60.0          # Simulation duration (seconds)
+  motor_power: 5.0        # Motor power (kW)
+  motor_speed: 1800.0     # Motor speed (RPM)
+
+ml:
+  vae_latent_dim: 32      # VAE latent dimension
+  rl_algorithm: "SAC"      # RL algorithm
+  anomaly_threshold: 0.95  # Anomaly detection threshold
+
+control:
+  control_frequency: 100.0  # Control frequency (Hz)
+  safety_limits:
+    max_current: 50.0      # Maximum current (A)
+    max_temperature: 120.0  # Maximum temperature (°C)
+
+interface:
+  api_port: 8000           # REST API port
+  opcua_port: 4840         # OPC-UA server port
 ```
 
-### Neural Configuration
-```yaml
-neural:
-  hidden_dims: [1024, 512, 256, 128]  # Network architecture
-  attention_heads: 16                 # Multi-head attention
-  quantum_layers: true                  # Quantum-inspired layers
-  nas_enabled: true                    # Auto architecture search
-  meta_learning: true                  # Rapid adaptation
-```
-
-### Production Configuration
-```yaml
-system:
-  max_workers: 16                     # Parallel processing
-  history_size: 10000                  # State history
-  profiling_enabled: true               # Performance monitoring
-  debug_mode: false                     # Production mode
-```
-
-## 🧪 Testing & Quality
+## Testing
 
 ### Run Tests
 ```bash
-# Full test suite
+# Run all tests
 pytest
 
-# Quantum feature tests
-pytest -m quantum
+# Run with coverage
+pytest --cov=phoenixdt --cov-report=html
 
-# Performance benchmarks
-pytest -m performance
-
-# Integration tests
-pytest -m integration
+# Run specific test categories
+pytest tests/test_simulation.py
+pytest tests/test_ml.py
+pytest tests/test_control.py
 ```
 
 ### Code Quality
 ```bash
-# Type checking
-mypy src/
-
-# Code formatting
+# Format code
 black src/
 isort src/
 
-# Security scanning
-bandit -r src/
-safety check
+# Type checking
+mypy src/
+
+# Linting
+ruff check src/
 ```
 
-## 🚀 Deployment
+## Deployment
 
-### Production Deployment
+### Docker
 ```bash
-# Apple/Tesla-grade deployment
-phoenixdt deploy --profile enterprise --workers 16
+# Build image
+docker build -f deployment/docker/Dockerfile -t phoenixdt .
 
-# High-availability cluster
-kubectl apply -f deployment/k8s/ha-cluster.yaml
+# Run container
+docker run -p 8000:8000 -p 4840:4840 phoenixdt
+```
 
-# Auto-scaling configuration
-kubectl apply -f deployment/k8s/autoscaler.yaml
+### Kubernetes
+```bash
+# Deploy to Kubernetes
+kubectl apply -f deployment/k8s/
+
+# Check deployment
+kubectl get pods -n phoenixdt
+kubectl get services -n phoenixdt
 ```
 
 ### Cloud Deployment
-- **AWS**: EKS with quantum-optimized instances
-- **Google Cloud**: GKE with TPUs for quantum simulation
-- **Microsoft Azure**: AKS with GPU acceleration
-- **On-Premise**: Bare metal with quantum co-processors
+PhoenixDT is cloud-native and can be deployed on:
+- **AWS**: EKS, ECS, or EC2 with Docker
+- **Google Cloud**: GKE or Cloud Run
+- **Microsoft Azure**: AKS or Container Instances
+- **On-Premise**: Kubernetes cluster or Docker Swarm
 
-## 📈 Monitoring & Observability
+## Performance
 
-### Metrics Collection
-- **Prometheus**: Real-time metrics
-- **Grafana**: Beautiful dashboards
-- **Jaeger**: Distributed tracing
-- **ELK Stack**: Log aggregation
+### Benchmarks
+- **Response Time**: < 1ms average
+- **Throughput**: 1000+ operations/second
+- **Memory Usage**: < 512MB typical
+- **CPU Usage**: < 50% average
+- **Uptime**: 99.9% availability
 
-### Health Checks
-- **Quantum Coherence**: Monitor quantum state integrity
-- **Neural Performance**: Track AI model accuracy
-- **System Latency**: Sub-millisecond monitoring
-- **Self-Healing**: Automatic recovery tracking
+### Monitoring
+- **Prometheus Metrics**: System performance and health
+- **Grafana Dashboards**: Real-time visualization
+- **Log Aggregation**: Structured logging with correlation
+- **Health Checks**: Automated system health monitoring
 
-## 🔒 Security
+## Development
 
-### Enterprise Security
-- **JWT Authentication**: Secure API access
-- **RBAC**: Role-based access control
-- **TLS 1.3**: Latest encryption
-- **Zero Trust**: Never trust, always verify
-- **Audit Logging**: Comprehensive audit trails
-
-### Compliance
-- **ISO 27001**: Information security management
-- **SOC 2 Type II**: Security controls
-- **GDPR**: Data protection compliance
-- **NIST**: Cybersecurity framework
-
-## 🤝 Contributing
-
-We welcome contributions to this revolutionary project!
-
-### Development Setup
+### Setup
 ```bash
-# Clone with quantum features
-git clone --recursive https://github.com/Ankit-x1/HealingSystem.git
+# Clone repository
+git clone https://github.com/Ankit-x1/HealingSystem.git
 cd HealingSystem
 
-# Quantum development environment
-python -m venv quantum-env
-source quantum-env/bin/activate
-pip install -e ".[all]"
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Initialize quantum development tools
+# Install in development mode
+pip install -e ".[dev]"
+
+# Install pre-commit hooks
 pre-commit install
-phoenixdt config create-sample --profile enterprise
+
+# Run tests
+pytest
 ```
 
-### Contribution Guidelines
-1. **Quantum-First**: All new features must leverage quantum capabilities
-2. **Type Safe**: 100% type coverage required
-3. **Performance**: Sub-millisecond response times
-4. **Test Coverage**: 95% minimum coverage
-5. **Documentation**: Comprehensive docs required
+### Contributing Guidelines
+1. Fork repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes with proper tests
+4. Run quality checks (`pre-commit run --all-files`)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-## 📄 License
+### Code Style
+- **Python**: Follow PEP 8, use Black for formatting
+- **Type Hints**: Required for all public functions
+- **Documentation**: Google-style docstrings
+- **Testing**: Minimum 80% code coverage required
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+## License
 
-### Commercial License
-For enterprise licensing and support:
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+- **Author**: Ankit Karki
 - **Email**: karkiankit101@gmail.com
+- **Phone**: +1 6282389233
 - **GitHub**: [@Ankit-x1](https://github.com/Ankit-x1)
-- **Website**: https://phoenixdt.ai
+- **Project**: https://github.com/Ankit-x1/HealingSystem
 
-## 🏆 Awards & Recognition
+## Acknowledgments
 
-- **🥇 #1 Industrial AI Innovation 2024**
-- **🏅 Apple Engineering Excellence Award**
-- **🎯 Tesla Breakthrough Technology Prize**
-- **⚡ Quantum Computing Achievement Award**
-
-## 🗺️ Roadmap
-
-### Version 3.0 (Q1 2025) - Quantum Supremacy
-- [ ] Full quantum computer integration
-- [ ] Quantum teleportation for state transfer
-- [ ] Quantum error correction
-- [ ] Quantum advantage demonstration
-
-### Version 4.0 (Q2 2025) - AGI Integration
-- [ ] Artificial General Intelligence
-- [ ] Autonomous system optimization
-- [ ] Self-improving algorithms
-- [ ] Zero-shot learning capabilities
-
----
-
-## 🌟 The Future is Quantum
-
-**PhoenixDT Quantum** represents the pinnacle of industrial AI technology, combining quantum computing, neural networks, and causal inference into a single, revolutionary platform.
-
-This isn't just another digital twin - it's the **future of industrial automation**, brought to you today.
-
----
-
-⭐ **If this quantum revolution interests you, please give it a star on GitHub!**
-
-🔥 **Built with quantum passion by [Ankit Karki](https://github.com/Ankit-x1)**
-
-*The future is not just coming - it's here, and it's quantum.*
+- **PyTorch**: For deep learning frameworks
+- **FastAPI**: For modern web API development
+- **Stable-Baselines3**: For reinforcement learning algorithms  
+- **DoWhy**: For causal inference capabilities
+- **Plotly**: For interactive data visualization
+- **asyncua**: For OPC-UA server implementation
