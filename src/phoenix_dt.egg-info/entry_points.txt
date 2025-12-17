@@ -1,0 +1,2 @@
+[console_scripts]
+phoenixdt = phoenixdt.cli:main

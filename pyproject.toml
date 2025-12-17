@@ -66,7 +66,7 @@ dependencies = [
     "networkx>=3.2.1",
     
     # Industrial Communication
-    "opcua-asyncio>=1.0.0",
+    "asyncua>=1.0.0",
     "pymodbus>=3.6.0",
     
     # Web Framework & API

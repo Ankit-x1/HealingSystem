@@ -92,7 +92,7 @@ repos:
         name: Bandit
         description: Find common security issues in Python code.
         entry: bandit
-        args: [-r, -f json -o bandit-report.json]
+        args: [-r, src/, -f, json, -o, bandit-report.json]
         language_version: python3
         files: ^src/.*\.py$
 
@@ -103,6 +103,6 @@ repos:
         name: Safety
         description: Check for known security vulnerabilities.
         entry: safety
-        args: [--json, --output safety-report.json]
+        args: [check, --json, --output, safety-report.json]
         language_version: python3
         files: ^requirements\.txt$

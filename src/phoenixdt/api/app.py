@@ -24,8 +24,8 @@ from pydantic import BaseModel, Field
 import uvicorn
 from loguru import logger
 
-from .core.digital_twin import DigitalTwin
-from .core.config import PhoenixConfig
+from ..core.digital_twin import DigitalTwin
+from ..core.config import PhoenixConfig
 
 
 # Pydantic Models

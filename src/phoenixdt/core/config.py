@@ -29,6 +29,9 @@ class SimulationConfig(BaseModel):
     motor_power: float = Field(default=5.0, description="Motor power in kW")
     motor_speed: float = Field(default=1800.0, description="Motor speed in RPM")
     load_torque: float = Field(default=10.0, description="Load torque in Nm")
+    integration_method: IntegrationMethod = Field(
+        default=IntegrationMethod.RK45, description="Numerical integration method"
+    )
 
 
 class MLConfig(BaseModel):
