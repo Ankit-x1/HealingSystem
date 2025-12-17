@@ -18,28 +18,20 @@ __description__ = (
 __url__ = "https://github.com/Ankit-x1/HealingSystem"
 
 # API and Interfaces
-from .api.app import create_app, run_server
-from .cli import main as cli_main
+from .api.app import app
+from .cli import cli
 from .core.config import PhoenixConfig
 
 # Core Components
 from .core.digital_twin import DigitalTwin
-
-# from .physics_engine import PhysicsSimulator
-# from .neural_architectures import AdaptiveNeuralController
-# from .causal_engine import CausalInferenceEngine
 
 
 # Version and Metadata
 __all__ = [
     "DigitalTwin",
     "PhoenixConfig",
-    # "PhysicsSimulator",
-    # "AdaptiveNeuralController",
-    # "CausalInferenceEngine",
-    "create_app",
-    "run_server",
-    "cli_main",
+    "app",
+    "cli",
     "__version__",
     "__author__",
     "__email__",

@@ -1,81 +1,138 @@
 """
-PhoenixDT API Server
+FastAPI Application for PhoenixDT
 
-Production-ready REST API with real-time WebSocket streaming.
+Clean, production-ready REST API with WebSocket streaming.
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
-from datetime import datetime
-from typing import Any
+import logging
+from contextlib import asynccontextmanager
+from typing import Any, Dict, List, Optional
 
-import numpy as np
-import uvicorn
-from fastapi import (
-    BackgroundTasks,
-    FastAPI,
-    HTTPException,
-    WebSocket,
-    WebSocketDisconnect,
-)
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
-from loguru import logger
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from ..core.config import PhoenixConfig
-from ..core.digital_twin import DigitalTwin
+from phoenixdt.core.config import PhoenixConfig
+from phoenixdt.core.digital_twin import DigitalTwin
 
 
-# Pydantic Models
-class SystemStatusResponse(BaseModel):
-    """System status response"""
+# Pydantic models for API
+class MotorStateResponse(BaseModel):
+    """Motor state response model."""
 
-    status: str = Field(..., description="Current system status")
-    uptime: float = Field(..., description="System uptime in seconds")
-    version: str = Field(default="2.0.0", description="System version")
-    timestamp: datetime = Field(..., description="Response timestamp")
-
-
-class DigitalTwinStateResponse(BaseModel):
-    """Digital twin state response"""
-
-    timestamp: float
-    physical_state: dict[str, float]
-    health_metrics: dict[str, float]
-    anomalies: list[dict[str, Any]] = Field(default_factory=list)
-
-
-class FaultInjectionRequest(BaseModel):
-    """Fault injection request"""
-
-    fault_type: str = Field(..., description="Type of fault to inject")
-    severity: float = Field(..., ge=0, le=1, description="Fault severity (0-1)")
+    speed: float = Field(..., description="Motor speed in RPM")
+    torque: float = Field(..., description="Motor torque in Nm")
+    current: float = Field(..., description="Motor current in A")
+    temperature: float = Field(..., description="Motor temperature in °C")
+    vibration: float = Field(..., description="Motor vibration in mm/s")
+    power: float = Field(..., description="Motor power in kW")
+    efficiency: float = Field(..., description="Motor efficiency in %")
 
 
 class ControlRequest(BaseModel):
-    """Control request"""
+    """Control request model."""
 
-    control_mode: str = Field(..., description="Control mode")
-    manual_voltage: list[float] | None = Field(
-        None, min_items=3, max_items=3, description="Manual 3-phase voltage"
-    )
+    target_speed: Optional[float] = Field(None, description="Target speed in RPM")
+    load_torque: Optional[float] = Field(None, description="Load torque in Nm")
 
 
-# Global variables
-digital_twin: DigitalTwin | None = None
+class SystemStatusResponse(BaseModel):
+    """System status response model."""
+
+    state: str = Field(..., description="System state")
+    simulation_time: float = Field(..., description="Simulation time in seconds")
+    motor: MotorStateResponse = Field(..., description="Motor state")
+    targets: Dict[str, float] = Field(..., description="Control targets")
+
+
+class AnomalyResponse(BaseModel):
+    """Anomaly response model."""
+
+    type: str = Field(..., description="Anomaly type")
+    severity: str = Field(..., description="Anomaly severity")
+    value: float = Field(..., description="Anomaly value")
+    possible_causes: List[str] = Field(..., description="Possible causes")
+
+
+# Global digital twin instance
+digital_twin: Optional[DigitalTwin] = None
+websocket_connections: List[WebSocket] = []
+
+
+class ConnectionManager:
+    """WebSocket connection manager."""
+
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        """Accept and store WebSocket connection."""
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        """Remove WebSocket connection."""
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def send_personal_message(self, message: dict, websocket: WebSocket):
+        """Send message to specific WebSocket."""
+        try:
+            await websocket.send_json(message)
+        except Exception:
+            # Connection might be closed
+            self.disconnect(websocket)
+
+    async def broadcast(self, message: dict):
+        """Broadcast message to all connected WebSockets."""
+        disconnected = []
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except Exception:
+                disconnected.append(connection)
+
+        # Remove disconnected connections
+        for connection in disconnected:
+            self.disconnect(connection)
+
+
+manager = ConnectionManager()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager."""
+    global digital_twin
+
+    # Initialize digital twin
+    config = PhoenixConfig()
+    digital_twin = DigitalTwin(config)
+
+    # Add callbacks for WebSocket updates
+    digital_twin.add_state_callback(on_state_update)
+    digital_twin.add_anomaly_callback(on_anomaly_detected)
+
+    # Start digital twin
+    await digital_twin.start()
+
+    yield
+
+    # Cleanup
+    if digital_twin:
+        await digital_twin.stop()
 
 
 # Create FastAPI app
 app = FastAPI(
     title="PhoenixDT API",
-    description="Industrial Digital Twin with AI-powered Anomaly Detection and Self-Healing Control",
-    version="2.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json",
+    description="Industrial Digital Twin API for Motor Systems",
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Add CORS middleware
@@ -88,334 +145,178 @@ app.add_middleware(
 )
 
 
-@app.get("/", response_class=HTMLResponse)
-async def get_dashboard():
-    """Serve simple dashboard"""
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>PhoenixDT Dashboard</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    </head>
-    <body class="bg-gray-900 text-white">
-        <div class="container mx-auto px-4 py-8">
-            <h1 class="text-3xl font-bold text-center mb-8">PhoenixDT Dashboard</h1>
-            
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h3 class="text-sm font-medium text-gray-400 mb-2">System Status</h3>
-                    <p id="system-status" class="text-2xl font-bold text-green-400">Ready</p>
-                </div>
-                
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h3 class="text-sm font-medium text-gray-400 mb-2">Health Score</h3>
-                    <p id="health-score" class="text-2xl font-bold text-blue-400">--%</p>
-                </div>
-                
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h3 class="text-sm font-medium text-gray-400 mb-2">Motor Speed</h3>
-                    <p id="motor-speed" class="text-2xl font-bold text-yellow-400">-- RPM</p>
-                </div>
-                
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h3 class="text-sm font-medium text-gray-400 mb-2">Temperature</h3>
-                    <p id="temperature" class="text-2xl font-bold text-red-400">--°C</p>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h2 class="text-xl font-bold mb-4">System Control</h2>
-                    <div class="space-y-4">
-                        <button onclick="startSystem()" class="w-full bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium">Start System</button>
-                        <button onclick="stopSystem()" class="w-full bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-medium">Stop System</button>
-                        <button onclick="injectFault()" class="w-full bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg font-medium">Inject Fault</button>
-                    </div>
-                </div>
-                
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h2 class="text-xl font-bold mb-4">Real-time Data</h2>
-                    <div id="data-chart"></div>
-                </div>
-            </div>
-        </div>
-        
-        <script>
-            let ws;
-            
-            function connectWebSocket() {
-                ws = new WebSocket('ws://localhost:8000/ws');
-                
-                ws.onopen = function() {
-                    console.log('WebSocket connected');
-                    document.getElementById('system-status').textContent = 'Connected';
-                };
-                
-                ws.onmessage = function(event) {
-                    const data = JSON.parse(event.data);
-                    updateDashboard(data);
-                };
-                
-                ws.onclose = function() {
-                    console.log('WebSocket disconnected');
-                    document.getElementById('system-status').textContent = 'Disconnected';
-                    setTimeout(connectWebSocket, 5000);
-                };
-            }
-            
-            function updateDashboard(data) {
-                // Update metrics
-                if (data.health_score !== undefined) {
-                    document.getElementById('health-score').textContent = Math.round(data.health_score * 100) + '%';
+# Callback functions
+def on_state_update(state):
+    """Callback for state updates."""
+    if manager.active_connections:
+        asyncio.create_task(
+            manager.broadcast(
+                {
+                    "type": "state_update",
+                    "data": {
+                        "speed": state.speed,
+                        "torque": state.torque,
+                        "current": state.current,
+                        "temperature": state.temperature,
+                        "vibration": state.vibration,
+                        "power": state.power,
+                        "efficiency": state.efficiency,
+                    },
                 }
-                
-                if (data.physical_state !== undefined) {
-                    document.getElementById('motor-speed').textContent = Math.round(data.physical_state.speed_rpm || 0) + ' RPM';
-                    document.getElementById('temperature').textContent = Math.round(data.physical_state.temperature || 0) + '°C';
-                }
-                
-                // Update chart
-                updateChart(data);
-            }
-            
-            function updateChart(data) {
-                const trace = {
-                    x: [1, 2, 3, 4, 5],
-                    y: [
-                        data.physical_state?.speed_rpm || 0,
-                        data.physical_state?.torque_nm || 0,
-                        data.physical_state?.current_a || 0,
-                        data.physical_state?.power_w || 0,
-                        data.health_score?.overall_health || 0
-                    ],
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'System Metrics'
-                };
-                
-                const layout = {
-                    title: 'Real-time System Metrics',
-                    xaxis: { title: 'Time' },
-                    yaxis: { title: 'Value' },
-                    paper_bgcolor: '#1f2937',
-                    plot_bgcolor: '#111827',
-                    font: { color: 'white' }
-                };
-                
-                Plotly.newPlot('data-chart', [trace], layout);
-            }
-            
-            async function startSystem() {
-                try {
-                    const response = await axios.post('/api/start');
-                    console.log('System started:', response.data);
-                } catch (error) {
-                    console.error('Failed to start system:', error);
-                }
-            }
-            
-            async function stopSystem() {
-                try {
-                    const response = await axios.post('/api/stop');
-                    console.log('System stopped:', response.data);
-                } catch (error) {
-                    console.error('Failed to stop system:', error);
-                }
-            }
-            
-            async function injectFault() {
-                try {
-                    const response = await axios.post('/api/fault', {
-                        fault_type: 'bearing_wear',
-                        severity: 0.5
-                    });
-                    console.log('Fault injected:', response.data);
-                } catch (error) {
-                    console.error('Failed to inject fault:', error);
-                }
-            }
-            
-            // Initialize
-            connectWebSocket();
-        </script>
-    </body>
-    </html>
-    """
+            )
+        )
+
+
+def on_anomaly_detected(anomalies):
+    """Callback for anomaly detection."""
+    if manager.active_connections and anomalies:
+        asyncio.create_task(
+            manager.broadcast({"type": "anomaly_detected", "data": anomalies})
+        )
+
+
+# API Routes
+@app.get("/", response_model=Dict[str, str])
+async def root():
+    """Root endpoint."""
+    return {"message": "PhoenixDT API", "version": "1.0.0"}
 
 
 @app.get("/api/status", response_model=SystemStatusResponse)
-async def get_system_status():
-    """Get system status"""
+async def get_status():
+    """Get current system status."""
     if not digital_twin:
         raise HTTPException(status_code=503, detail="Digital twin not initialized")
+
+    status = digital_twin.get_status()
 
     return SystemStatusResponse(
-        status="running" if digital_twin.is_running else "stopped",
-        uptime=0.0,  # Would be calculated from actual uptime
-        version="2.0.0",
-        timestamp=datetime.now(),
+        state=status["state"],
+        simulation_time=status["simulation_time"],
+        motor=MotorStateResponse(**status["motor"]),
+        targets=status["targets"],
     )
-
-
-@app.get("/api/state", response_model=DigitalTwinStateResponse)
-async def get_digital_twin_state():
-    """Get current digital twin state"""
-    if not digital_twin:
-        raise HTTPException(status_code=503, detail="Digital twin not initialized")
-
-    current_state = digital_twin.get_current_state()
-    if not current_state:
-        raise HTTPException(status_code=504, detail="Digital twin state not available")
-
-    return DigitalTwinStateResponse(
-        timestamp=current_state.timestamp,
-        physical_state=current_state.physical_state,
-        health_metrics=current_state.health_metrics,
-        anomalies=current_state.anomalies,
-    )
-
-
-@app.post("/api/start")
-async def start_digital_twin(background_tasks: BackgroundTasks):
-    """Start digital twin"""
-    if not digital_twin:
-        raise HTTPException(status_code=503, detail="Digital twin not initialized")
-
-    if digital_twin.is_running:
-        return {"message": "Digital twin is already running"}
-
-    try:
-        # Start in background
-        async def start_background():
-            await digital_twin.start()
-
-        background_tasks.add_task(start_background)  # Don't call the function
-
-        logger.info("Digital twin start initiated")
-        return {"message": "Digital twin start initiated"}
-    except Exception as e:
-        logger.error(f"Failed to start digital twin: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to start digital twin: {e}"
-        ) from e
-
-
-@app.post("/api/stop")
-async def stop_digital_twin():
-    """Stop digital twin"""
-    if not digital_twin:
-        raise HTTPException(status_code=503, detail="Digital twin not initialized")
-
-    try:
-        await digital_twin.stop()
-        logger.info("Digital twin stopped")
-        return {"message": "Digital twin stopped successfully"}
-    except Exception as e:
-        logger.error(f"Failed to stop digital twin: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to stop digital twin: {e}") from e
-
-
-@app.post("/api/fault")
-async def inject_fault(request: FaultInjectionRequest):
-    """Inject fault into system"""
-    if not digital_twin:
-        raise HTTPException(status_code=503, detail="Digital twin not initialized")
-
-    try:
-        # Inject fault using physics simulator
-        await digital_twin.simulator.inject_fault(request.fault_type, request.severity)
-
-        logger.info(
-            f"Fault injected: {request.fault_type} (severity: {request.severity})"
-        )
-        return {"message": f"Fault {request.fault_type} injected successfully"}
-    except Exception as e:
-        logger.error(f"Failed to inject fault: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to inject fault: {e}") from e
 
 
 @app.post("/api/control")
-async def set_control(request: ControlRequest):
-    """Set control parameters"""
+async def set_control(control: ControlRequest):
+    """Set control parameters."""
     if not digital_twin:
         raise HTTPException(status_code=503, detail="Digital twin not initialized")
 
-    try:
-        # Set control mode
-        digital_twin.set_control_mode(request.control_mode)
+    if control.target_speed is not None:
+        digital_twin.set_target_speed(control.target_speed)
 
-        # Set manual control if provided
-        if request.manual_voltage:
-            digital_twin.set_manual_control(np.array(request.manual_voltage))
+    if control.load_torque is not None:
+        digital_twin.set_load_torque(control.load_torque)
 
-        logger.info(f"Control set to {request.control_mode} mode")
-        return {"message": f"Control set to {request.control_mode} mode"}
-    except Exception as e:
-        logger.error(f"Failed to set control: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to set control: {e}") from e
+    return {"message": "Control parameters updated successfully"}
+
+
+@app.get("/api/anomalies", response_model=List[AnomalyResponse])
+async def get_anomalies():
+    """Get current anomalies."""
+    if not digital_twin:
+        raise HTTPException(status_code=503, detail="Digital twin not initialized")
+
+    # Get recent anomalies from analyzer
+    anomalies = digital_twin.analyzer.analyze_anomalies()
+
+    return [
+        AnomalyResponse(
+            type=anomaly["type"],
+            severity=anomaly["severity"],
+            value=anomaly["value"],
+            possible_causes=anomaly["possible_causes"],
+        )
+        for anomaly in anomalies
+    ]
+
+
+@app.post("/api/start")
+async def start_simulation():
+    """Start the simulation."""
+    if not digital_twin:
+        raise HTTPException(status_code=503, detail="Digital twin not initialized")
+
+    await digital_twin.start()
+    return {"message": "Simulation started"}
+
+
+@app.post("/api/stop")
+async def stop_simulation():
+    """Stop the simulation."""
+    if not digital_twin:
+        raise HTTPException(status_code=503, detail="Digital twin not initialized")
+
+    await digital_twin.stop()
+    return {"message": "Simulation stopped"}
+
+
+@app.post("/api/pause")
+async def pause_simulation():
+    """Pause the simulation."""
+    if not digital_twin:
+        raise HTTPException(status_code=503, detail="Digital twin not initialized")
+
+    await digital_twin.pause()
+    return {"message": "Simulation paused"}
+
+
+@app.post("/api/resume")
+async def resume_simulation():
+    """Resume the simulation."""
+    if not digital_twin:
+        raise HTTPException(status_code=503, detail="Digital twin not initialized")
+
+    await digital_twin.resume()
+    return {"message": "Simulation resumed"}
+
+
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint."""
+    if not digital_twin:
+        raise HTTPException(status_code=503, detail="Digital twin not initialized")
+
+    return {
+        "status": "healthy",
+        "digital_twin_state": digital_twin.system_state.value,
+        "uptime": digital_twin.simulation_time,
+    }
 
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket endpoint for real-time data streaming"""
-    await websocket.accept()
-
+    """WebSocket endpoint for real-time updates."""
+    await manager.connect(websocket)
     try:
         while True:
-            if digital_twin and digital_twin.is_running:
-                current_state = digital_twin.get_current_state()
-                if current_state:
-                    # Send state data
-                    await websocket.send_text(
-                        json.dumps(
-                            {
-                                "timestamp": current_state.timestamp,
-                                "physical_state": current_state.physical_state,
-                                "health_metrics": current_state.health_metrics,
-                                "anomalies": current_state.anomalies,
-                            },
-                            default=str,
-                        )
-                    )
-
-            try:
-                await asyncio.sleep(0.1)  # 10Hz update rate
-            except asyncio.CancelledError:
-                break
-
+            # Keep connection alive and handle incoming messages
+            data = await websocket.receive_text()
+            # Echo back or handle specific commands
+            await manager.send_personal_message(
+                {"type": "echo", "data": data}, websocket
+            )
     except WebSocketDisconnect:
-        logger.info("WebSocket disconnected")
-    except Exception as e:
-        logger.error(f"WebSocket error: {e}")
+        manager.disconnect(websocket)
 
 
-# ... (rest of the code remains the same)
-
-
-def create_app() -> FastAPI:
-    """Create and configure FastAPI application"""
-    global digital_twin
-
-    # Initialize digital twin
-    config = PhoenixConfig()
-    digital_twin = DigitalTwin(config)
-
-    return app
-
-
-def run_server(host: str = "0.0.0.0", port: int = 8000, reload: bool = False):
-    """Run the API server"""
-    logger.info(f"Starting PhoenixDT API server on {host}:{port}")
-
-    uvicorn.run(
-        "phoenixdt.api.app:app", host=host, port=port, reload=reload, log_level="info"
-    )
+# Error handlers
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    """Global exception handler."""
+    logging.error(f"Global exception: {exc}")
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 if __name__ == "__main__":
-    run_server(reload=True)
+    import uvicorn
+
+    config = PhoenixConfig()
+    uvicorn.run(
+        "app:app",
+        host="0.0.0.0",
+        port=config.interface.api_port,
+        reload=config.interface.api_port == 8000,  # Only reload in development
+    )
