@@ -705,14 +705,22 @@ class MultiModalAttention(nn.Module):
     def __init__(self, input_dim: int, hidden_dim: int, num_heads: int):
         super().__init__()
         self.attention = nn.MultiheadAttention(
-            embed_dim=hidden_dim, num_heads=num_heads, batch_first=True
+            embed_dim=input_dim, num_heads=num_heads, batch_first=True
         )
-        self.projection = nn.Linear(input_dim, hidden_dim)
+        self.projection = nn.Linear(input_dim, input_dim)  # Project to same dimension
 
     async def forward(
         self, quantum: torch.Tensor, classical: torch.Tensor, health: torch.Tensor
     ) -> torch.Tensor:
         """Fuse multi-modal inputs with attention"""
+        # Ensure inputs are 2D (add batch dimension if needed)
+        if quantum.dim() == 1:
+            quantum = quantum.unsqueeze(0)
+        if classical.dim() == 1:
+            classical = classical.unsqueeze(0)
+        if health.dim() == 1:
+            health = health.unsqueeze(0)
+            
         # Stack inputs
         inputs = torch.stack([quantum, classical, health], dim=1)
 
@@ -722,8 +730,14 @@ class MultiModalAttention(nn.Module):
         # Apply attention
         attended, _ = self.attention(projected, projected, projected)
 
-        # Return fused features
-        return attended.mean(dim=1)
+        # Return fused features (flatten to 2D)
+        fused = attended.mean(dim=1)
+        
+        # Ensure output is 2D
+        if fused.dim() == 3 and fused.shape[0] == 1:
+            fused = fused.squeeze(0)
+            
+        return fused
 
 
 class UncertaintyEstimator(nn.Module):

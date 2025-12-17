@@ -291,8 +291,11 @@ async def start_digital_twin(background_tasks: BackgroundTasks):
 
     try:
         # Start in background
-        background_tasks.add_task(lambda: asyncio.create_task(digital_twin.start()))
-
+        async def start_background():
+            await digital_twin.start()
+        
+        background_tasks.add_task(start_background)  # Don't call the function
+        
         logger.info("Digital twin start initiated")
         return {"message": "Digital twin start initiated"}
     except Exception as e:
@@ -380,13 +383,17 @@ async def websocket_endpoint(websocket: WebSocket):
                         )
                     )
 
-            await asyncio.sleep(0.1)  # 10Hz update rate
+            try:
+                await asyncio.sleep(0.1)  # 10Hz update rate
+            except asyncio.CancelledError:
+                break
 
     except WebSocketDisconnect:
         logger.info("WebSocket disconnected")
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
 
+# ... (rest of the code remains the same)
 
 def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
