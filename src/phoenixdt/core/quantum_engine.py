@@ -245,11 +245,12 @@ class QuantumStateEngine:
         strategy = {
             "control_adjustments": optimal_params[: self.params.state_dim],
             "parameter_adjustments": dict(
-                    zip(
-                        ["motor_speed", "torque", "current", "voltage"],
-                        optimal_params[self.params.state_dim : self.params.state_dim + 4],
-                    )
-                ),
+                zip(
+                    ["motor_speed", "torque", "current", "voltage"],
+                    optimal_params[self.params.state_dim : self.params.state_dim + 4],
+                    strict=False,
+                )
+            ),
             "neural_reconfig": optimal_params[self.params.state_dim + 4 :],
         }
 

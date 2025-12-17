@@ -157,31 +157,62 @@ class DigitalTwin:
                 # Get neural control output
                 # Simple approach: concatenate tensors to match expected input_dim=16
                 quantum_tensor = torch.zeros(16, dtype=torch.float32)
-                classical_values = [400.0, 200.0, 50.0, 480.0, 5000.0, 0.85, 65.0, 0.1, 101.3, 100.0, 60.0, 0.75, 0.8, 0.2, 1.0, 0.9]  # 16 parameters
+                classical_values = [
+                    400.0,
+                    200.0,
+                    50.0,
+                    480.0,
+                    5000.0,
+                    0.85,
+                    65.0,
+                    0.1,
+                    101.3,
+                    100.0,
+                    60.0,
+                    0.75,
+                    0.8,
+                    0.2,
+                    1.0,
+                    0.9,
+                ]  # 16 parameters
                 classical_tensor = torch.tensor(classical_values, dtype=torch.float32)
                 health_tensor = torch.tensor([1.0] * 16, dtype=torch.float32)
-                
+
                 # Simple concatenation approach
-                combined_input = (quantum_tensor + classical_tensor + health_tensor) / 3.0
-                
+                combined_input = (
+                    quantum_tensor + classical_tensor + health_tensor
+                ) / 3.0
+
                 # Bypass attention fusion and directly use control networks
                 try:
                     # Try to use the first control network directly
-                    control_network = list(self.neural_controller.control_networks.values())[0]
-                    neural_control = await control_network.predict_with_uncertainty(combined_input)
+                    control_network = list(
+                        self.neural_controller.control_networks.values()
+                    )[0]
+                    neural_control = await control_network.predict_with_uncertainty(
+                        combined_input
+                    )
                     neural_control = neural_control[0]  # Get the prediction tensor
-                except Exception as e:
+                except Exception:
                     # Fallback: return simple control signal
-                    neural_control = torch.tensor([400.0, 200.0, 50.0], dtype=torch.float32)
+                    neural_control = torch.tensor(
+                        [400.0, 200.0, 50.0], dtype=torch.float32
+                    )
 
                 # Create state snapshot
                 self.current_state = TwinState(
                     timestamp=time.time(),
                     physical_state=physical_state,
-                    predicted_state=await self._predict_next_state({"param_0": 400.0, "param_1": 200.0, "param_2": 50.0}),
+                    predicted_state=await self._predict_next_state(
+                        {"param_0": 400.0, "param_1": 200.0, "param_2": 50.0}
+                    ),
                     control_actions=neural_control,
-                    anomalies=await self._detect_anomalies({"param_0": 400.0, "param_1": 200.0, "param_2": 50.0}),
-                    health_metrics=await self._calculate_health_metrics({"param_0": 400.0, "param_1": 200.0, "param_2": 50.0}),
+                    anomalies=await self._detect_anomalies(
+                        {"param_0": 400.0, "param_1": 200.0, "param_2": 50.0}
+                    ),
+                    health_metrics=await self._calculate_health_metrics(
+                        {"param_0": 400.0, "param_1": 200.0, "param_2": 50.0}
+                    ),
                     performance_metrics=await self._calculate_performance_metrics(),
                 )
 
@@ -268,7 +299,7 @@ class DigitalTwin:
 
     def _get_health_vector(self) -> np.ndarray:
         """Get health vector for neural controller"""
-        if self.current_state and hasattr(self.current_state, 'health_metrics'):
+        if self.current_state and hasattr(self.current_state, "health_metrics"):
             health_metrics = self.current_state.health_metrics
             base_vector = [
                 health_metrics.get("motor_health", 1.0),

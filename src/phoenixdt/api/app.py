@@ -293,16 +293,16 @@ async def start_digital_twin(background_tasks: BackgroundTasks):
         # Start in background
         async def start_background():
             await digital_twin.start()
-        
+
         background_tasks.add_task(start_background)  # Don't call the function
-        
+
         logger.info("Digital twin start initiated")
         return {"message": "Digital twin start initiated"}
     except Exception as e:
         logger.error(f"Failed to start digital twin: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to start digital twin: {e}"
-        )
+        ) from e
 
 
 @app.post("/api/stop")
@@ -317,7 +317,7 @@ async def stop_digital_twin():
         return {"message": "Digital twin stopped successfully"}
     except Exception as e:
         logger.error(f"Failed to stop digital twin: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to stop digital twin: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to stop digital twin: {e}") from e
 
 
 @app.post("/api/fault")
@@ -336,7 +336,7 @@ async def inject_fault(request: FaultInjectionRequest):
         return {"message": f"Fault {request.fault_type} injected successfully"}
     except Exception as e:
         logger.error(f"Failed to inject fault: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to inject fault: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to inject fault: {e}") from e
 
 
 @app.post("/api/control")
@@ -357,7 +357,7 @@ async def set_control(request: ControlRequest):
         return {"message": f"Control set to {request.control_mode} mode"}
     except Exception as e:
         logger.error(f"Failed to set control: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to set control: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to set control: {e}") from e
 
 
 @app.websocket("/ws")
@@ -393,7 +393,9 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
 
+
 # ... (rest of the code remains the same)
+
 
 def create_app() -> FastAPI:
     """Create and configure FastAPI application"""

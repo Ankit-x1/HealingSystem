@@ -106,9 +106,7 @@ def status() -> None:
 @app.command()
 def config(
     action: str = typer.Argument(..., help="Action: show, create-sample"),
-    output: Path | None = typer.Option(
-        None, "--output", "-o", help="Output file path"
-    ),
+    output: Path | None = typer.Option(None, "--output", "-o", help="Output file path"),
 ) -> None:
     """Configuration management"""
     if action == "show":

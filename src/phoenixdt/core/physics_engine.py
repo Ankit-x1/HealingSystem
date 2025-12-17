@@ -196,9 +196,7 @@ class PhysicsSimulator:
 
         logger.info("Physics simulator initialization complete")
 
-    async def step(
-        self, control_input: np.ndarray | None = None
-    ) -> dict[str, float]:
+    async def step(self, control_input: np.ndarray | None = None) -> dict[str, float]:
         """Perform one physics simulation step"""
         step_start = time.time()
 

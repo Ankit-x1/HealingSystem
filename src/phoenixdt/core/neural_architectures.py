@@ -720,7 +720,7 @@ class MultiModalAttention(nn.Module):
             classical = classical.unsqueeze(0)
         if health.dim() == 1:
             health = health.unsqueeze(0)
-            
+
         # Stack inputs
         inputs = torch.stack([quantum, classical, health], dim=1)
 
@@ -732,11 +732,11 @@ class MultiModalAttention(nn.Module):
 
         # Return fused features (flatten to 2D)
         fused = attended.mean(dim=1)
-        
+
         # Ensure output is 2D
         if fused.dim() == 3 and fused.shape[0] == 1:
             fused = fused.squeeze(0)
-            
+
         return fused
 
 

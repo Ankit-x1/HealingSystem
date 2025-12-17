@@ -10,7 +10,7 @@ from enum import Enum
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class IntegrationMethod(str, Enum):
@@ -84,7 +84,7 @@ class PhoenixConfig(BaseModel):
         env_prefix="PHOENIXDT",
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=False
+        case_sensitive=False,
     )
 
     @classmethod
