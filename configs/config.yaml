@@ -1,0 +1,36 @@
+# PhoenixDT Configuration
+
+simulation:
+  dt: 0.001              # Time step in seconds
+  duration: 60.0          # Default simulation duration in seconds
+  motor_power: 5.0        # Motor power in kW
+  motor_speed: 1800.0     # Motor speed in RPM
+  load_torque: 10.0       # Load torque in Nm
+
+ml:
+  vae_latent_dim: 32      # VAE latent dimension
+  vae_hidden_dims: [256, 128, 64]  # VAE hidden layers
+  rl_algorithm: "SAC"      # RL algorithm to use
+  rl_learning_rate: 0.0003 # RL learning rate
+  anomaly_threshold: 0.95  # Anomaly detection threshold
+
+control:
+  control_frequency: 100.0  # Control frequency in Hz
+  safety_limits:
+    max_current: 50.0      # Maximum current in Amperes
+    max_temperature: 120.0  # Maximum temperature in Celsius
+    max_vibration: 10.0     # Maximum vibration in mm/s
+  pid_gains:
+    kp: 1.0                # Proportional gain
+    ki: 0.1                # Integral gain
+    kd: 0.01               # Derivative gain
+
+interface:
+  opcua_port: 4840         # OPC-UA server port
+  dashboard_port: 8501      # Dashboard port
+  api_port: 8000           # REST API port
+  prometheus_port: 9090     # Prometheus metrics port
+
+log_level: "INFO"           # Logging level
+data_dir: "data"            # Data directory
+model_dir: "data/models"     # Model directory
