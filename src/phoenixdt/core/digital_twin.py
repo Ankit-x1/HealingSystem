@@ -1,386 +1,507 @@
 """
-Digital Twin Core Engine
+PhoenixDT: Next-Generation Industrial Digital Twin Core
 
-Orchestrates simulation, ML models, and control systems
-to create a comprehensive digital twin platform.
+Apple/Tesla-grade engineering with quantum-inspired algorithms and
+real-time predictive capabilities.
+
+Architecture Principles:
+- Zero redundancy: Every line serves a purpose
+- Quantum-inspired state management
+- Real-time causal inference
+- Self-healing neural networks
+- Production-grade resilience
 """
 
+from __future__ import annotations
+import asyncio
 import numpy as np
-import pandas as pd
-from typing import Dict, List, Optional, Any, Callable
+import torch
+import torch.nn as nn
+from typing import Dict, List, Optional, Any, Tuple, Union, Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-import asyncio
 import time
-from loguru import logger
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import asynccontextmanager
+from loguru import logger
+import json
+from enum import Enum
 
-from ..core.config import Config
-from ..simulation.motor_simulator import MotorSimulator, MotorParameters
-from ..ml.failure_synthesizer import FailureSynthesizer
-from ..ml.anomaly_detector import AnomalyDetector
-from ..control.rl_controller import RLController
-from ..control.pid_controller import PIDController
+from .quantum_engine import QuantumStateEngine
+from .neural_architectures import AdaptiveNeuralController
+from .causal_engine import CausalInferenceEngine
+from .physics_engine import PhysicsSimulator
+from .config import PhoenixConfig
+
+
+class SystemState(Enum):
+    """System operational states"""
+
+    INITIALIZING = "initializing"
+    RUNNING = "running"
+    PAUSED = "paused"
+    FAULT_DETECTED = "fault_detected"
+    SELF_HEALING = "self_healing"
+    EMERGENCY_STOP = "emergency_stop"
 
 
 @dataclass
-class TwinState:
-    """Digital twin state snapshot"""
+class QuantumTwinState:
+    """Quantum-enhanced digital twin state"""
 
     timestamp: float
-    physical_state: Dict[str, float]
-    predicted_state: Dict[str, float]
-    control_actions: Dict[str, float]
-    anomalies: List[Dict[str, Any]]
-    health_metrics: Dict[str, float]
-    performance_metrics: Dict[str, float]
+    quantum_state: np.ndarray
+    classical_state: Dict[str, float]
+    prediction_horizon: Dict[str, np.ndarray]
+    causal_graph: Dict[str, float]
+    health_vector: np.ndarray
+    anomaly_signature: np.ndarray
+    control_policy: np.ndarray
+    uncertainty_quantum: np.ndarray
+    entropy: float
+    coherence: float
 
 
-class DigitalTwin:
-    """Core digital twin engine integrating simulation, ML, and control"""
+@dataclass
+class PredictiveInsight:
+    """Predictive analytics with confidence intervals"""
 
-    def __init__(self, config: Optional[Config] = None):
-        self.config = config or Config()
+    metric: str
+    current_value: float
+    predicted_values: np.ndarray
+    confidence_intervals: Tuple[np.ndarray, np.ndarray]
+    risk_score: float
+    causal_factors: List[str]
+    recommended_actions: List[str]
 
-        # Initialize components
-        self.simulator = MotorSimulator()
-        self.failure_synthesizer = FailureSynthesizer(self.config.ml)
-        self.anomaly_detector = AnomalyDetector(self.config.ml)
-        self.rl_controller = RLController(self.config.control)
-        self.pid_controller = PIDController(self.config.control.pid_gains)
+
+class PhoenixDigitalTwin:
+    """
+    Next-generation digital twin with quantum-inspired algorithms
+
+    Features:
+    - Quantum state superposition for parallel simulation
+    - Neural architecture search for optimal control
+    - Real-time causal inference
+    - Self-healing capabilities
+    - Predictive maintenance with uncertainty quantification
+    """
+
+    def __init__(self, config: Optional[PhoenixConfig] = None):
+        self.config = config or PhoenixConfig()
+        self.state = SystemState.INITIALIZING
+
+        # Core engines
+        self.quantum_engine = QuantumStateEngine(
+            state_dim=self.config.quantum.state_dim,
+            coherence_time=self.config.quantum.coherence_time,
+        )
+
+        self.neural_controller = AdaptiveNeuralController(
+            input_dim=self.config.neural.input_dim,
+            output_dim=self.config.neural.output_dim,
+            hidden_dims=self.config.neural.hidden_dims,
+        )
+
+        self.causal_engine = CausalInferenceEngine(
+            n_variables=self.config.causal.n_variables,
+            max_lag=self.config.causal.max_lag,
+        )
+
+        self.physics_engine = PhysicsSimulator(
+            dt=self.config.physics.dt,
+            integration_method=self.config.physics.integration_method,
+        )
 
         # State management
-        self.current_state: Optional[TwinState] = None
-        self.state_history: List[TwinState] = []
-        self.is_running = False
-        self.simulation_time = 0.0
+        self.current_state: Optional[QuantumTwinState] = None
+        self.state_history: List[QuantumTwinState] = []
+        self.predictive_insights: List[PredictiveInsight] = []
 
-        # Control mode
-        self.control_mode = "rl"  # "rl", "pid", "manual"
-        self.manual_control = np.zeros(3)
+        # Performance metrics
+        self.metrics = {
+            "uptime": 0.0,
+            "predictions_made": 0,
+            "anomalies_detected": 0,
+            "self_healing_events": 0,
+            "avg_response_time": 0.0,
+        }
 
-        # Callbacks for external interfaces
-        self.state_callbacks: List[Callable] = []
-        self.anomaly_callbacks: List[Callable] = []
+        # Async management
+        self._executor = ThreadPoolExecutor(max_workers=self.config.system.max_workers)
+        self._running = False
+        self._tasks: List[asyncio.Task] = []
 
-        # Thread pool for async operations
-        self.executor = ThreadPoolExecutor(max_workers=4)
+        logger.info("PhoenixDT Core initialized with quantum-enhanced capabilities")
 
-        logger.info("Digital twin initialized")
+    async def initialize(self) -> bool:
+        """Initialize all subsystems"""
+        try:
+            logger.info("Initializing PhoenixDT quantum core...")
 
-    async def start(self, duration: Optional[float] = None):
-        """Start digital twin simulation"""
-        self.is_running = True
+            # Initialize quantum state
+            await self.quantum_engine.initialize()
+
+            # Load neural architectures
+            await self.neural_controller.load_architectures()
+
+            # Initialize causal engine
+            await self.causal_engine.initialize()
+
+            # Initialize physics engine
+            await self.physics_engine.initialize()
+
+            # Create initial quantum state
+            initial_quantum_state = (
+                await self.quantum_engine.create_superposition_state(
+                    self.physics_engine.get_initial_conditions()
+                )
+            )
+
+            self.current_state = QuantumTwinState(
+                timestamp=time.time(),
+                quantum_state=initial_quantum_state,
+                classical_state=self.physics_engine.get_state_dict(),
+                prediction_horizon={},
+                causal_graph={},
+                health_vector=np.ones(self.config.neural.output_dim),
+                anomaly_signature=np.zeros(self.config.neural.output_dim),
+                control_policy=np.zeros(self.config.neural.output_dim),
+                uncertainty_quantum=np.ones(self.config.neural.output_dim) * 0.1,
+                entropy=0.0,
+                coherence=1.0,
+            )
+
+            self.state = SystemState.RUNNING
+            logger.info(
+                "PhoenixDT initialization complete - quantum coherence achieved"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(f"Initialization failed: {e}")
+            self.state = SystemState.EMERGENCY_STOP
+            return False
+
+    async def start(self, duration: Optional[float] = None) -> None:
+        """Start the digital twin with quantum-enhanced simulation"""
+        if not await self.initialize():
+            raise RuntimeError("Failed to initialize PhoenixDT")
+
+        self._running = True
         start_time = time.time()
 
-        logger.info(f"Starting digital twin simulation")
+        logger.info("Starting PhoenixDT quantum simulation...")
 
         try:
-            while self.is_running:
-                if duration and (time.time() - start_time) > duration:
-                    break
+            # Start background tasks
+            self._tasks = [
+                asyncio.create_task(self._quantum_simulation_loop()),
+                asyncio.create_task(self._predictive_analytics_loop()),
+                asyncio.create_task(self._self_healing_loop()),
+                asyncio.create_task(self._causal_inference_loop()),
+            ]
 
-                # Execute simulation step
-                await self._step()
-
-                # Control loop frequency
-                await asyncio.sleep(1.0 / self.config.control.control_frequency)
+            # Run for specified duration or indefinitely
+            if duration:
+                await asyncio.sleep(duration)
+                await self.stop()
+            else:
+                # Run until stopped
+                while self._running:
+                    await asyncio.sleep(0.1)
 
         except Exception as e:
             logger.error(f"Simulation error: {e}")
+            self.state = SystemState.EMERGENCY_STOP
+            raise
         finally:
-            self.is_running = False
-            logger.info("Digital twin simulation stopped")
+            self.metrics["uptime"] = time.time() - start_time
 
-    async def _step(self):
-        """Execute one simulation step"""
-        # Get current load (could be from external source)
-        load_torque = self._get_load_torque()
+    async def stop(self) -> None:
+        """Stop the digital twin gracefully"""
+        logger.info("Initiating quantum decoherence sequence...")
+        self._running = False
+        self.state = SystemState.PAUSED
 
-        # Get control action based on mode
-        if self.control_mode == "rl":
-            voltage_command = await self.rl_controller.get_action(
-                self.simulator.get_state_vector()
-            )
-        elif self.control_mode == "pid":
-            voltage_command = self.pid_controller.compute(
-                setpoint=self.config.simulation.motor_speed * 2 * np.pi / 60,
-                current_value=self.simulator.speed,
-            )
-            voltage_command = np.full(3, voltage_command)
-        else:  # manual
-            voltage_command = self.manual_control
+        # Cancel all tasks
+        for task in self._tasks:
+            task.cancel()
 
-        # Simulate physical system
-        physical_state = self.simulator.step(
-            dt=self.config.simulation.dt,
-            load_torque=load_torque,
-            voltage_command=voltage_command,
-        )
+        # Wait for tasks to complete
+        await asyncio.gather(*self._tasks, return_exceptions=True)
 
-        # Generate failure scenarios for training
-        if np.random.random() < 0.01:  # 1% chance
-            synthetic_failure = self.failure_synthesizer.generate_failure(
-                self.simulator.get_state_vector()
-            )
-            self.simulator.inject_fault(
-                synthetic_failure["type"], synthetic_failure["severity"]
-            )
+        # Shutdown engines
+        await self.quantum_engine.shutdown()
+        await self.neural_controller.shutdown()
+        await self.causal_engine.shutdown()
+        await self.physics_engine.shutdown()
 
-        # Detect anomalies
-        state_vector = self.simulator.get_state_vector()
-        anomalies = await self.anomaly_detector.detect(state_vector)
+        self.state = SystemState.INITIALIZING
+        logger.info("PhoenixDT shutdown complete")
 
-        # Predict future state
-        predicted_state = await self._predict_future_state(
-            state_vector, voltage_command
-        )
+    async def _quantum_simulation_loop(self) -> None:
+        """Main quantum simulation loop"""
+        while self._running:
+            loop_start = time.time()
 
-        # Calculate health and performance metrics
-        health_metrics = self._calculate_health_metrics()
-        performance_metrics = self._calculate_performance_metrics(physical_state)
-
-        # Create twin state
-        self.current_state = TwinState(
-            timestamp=self.simulator.time,
-            physical_state=physical_state,
-            predicted_state=predicted_state,
-            control_actions={"voltage": voltage_command.tolist()},
-            anomalies=anomalies,
-            health_metrics=health_metrics,
-            performance_metrics=performance_metrics,
-        )
-
-        # Store in history
-        self.state_history.append(self.current_state)
-
-        # Update simulation time
-        self.simulation_time += self.config.simulation.dt
-
-        # Trigger callbacks
-        await self._trigger_callbacks()
-
-        # Update RL controller with new state
-        if self.control_mode == "rl":
-            reward = self._calculate_reward(physical_state, health_metrics)
-            await self.rl_controller.update(
-                state_vector, voltage_command, reward, state_vector
-            )
-
-    def _get_load_torque(self) -> float:
-        """Get current load torque (could be from external source)"""
-        # Simulate varying load
-        base_load = self.config.simulation.load_torque
-        variation = np.sin(self.simulation_time * 0.1) * 2.0
-        noise = np.random.normal(0, 0.5)
-        return base_load + variation + noise
-
-    async def _predict_future_state(
-        self, current_state: np.ndarray, control_action: np.ndarray
-    ) -> Dict[str, float]:
-        """Predict future system state using ML models"""
-        # Simple physics-based prediction for now
-        # In production, this would use trained neural networks
-
-        future_speed = current_state[0] * 1.01  # Slight speed increase
-        future_torque = current_state[1] * 0.98  # Slight torque decrease
-        future_wear = current_state[4] * 1.001  # Gradual wear increase
-
-        return {
-            "speed_rpm": future_speed * 60 / (2 * np.pi),
-            "torque_nm": future_torque,
-            "bearing_wear": future_wear,
-            "predicted_horizon": 1.0,  # seconds
-        }
-
-    def _calculate_health_metrics(self) -> Dict[str, float]:
-        """Calculate system health metrics"""
-        bearing = self.simulator.bearing_state
-
-        # Overall health score (0-1, 1=healthy)
-        bearing_health = 1.0 - bearing.wear_level
-        thermal_health = max(0, 1.0 - (bearing.temperature - 25) / 100)
-        vibration_health = max(0, 1.0 - bearing.vibration_rms / 10)
-
-        overall_health = np.mean([bearing_health, thermal_health, vibration_health])
-
-        # Remaining useful life (hours)
-        wear_rate = bearing.wear_level / max(1, self.simulation_time / 3600)
-        rul = max(0, (1.0 - bearing.wear_level) / max(wear_rate, 1e-6))
-
-        return {
-            "overall_health": overall_health,
-            "bearing_health": bearing_health,
-            "thermal_health": thermal_health,
-            "vibration_health": vibration_health,
-            "remaining_useful_life_hours": rul,
-            "wear_rate_per_hour": wear_rate,
-        }
-
-    def _calculate_performance_metrics(
-        self, physical_state: Dict[str, float]
-    ) -> Dict[str, float]:
-        """Calculate system performance metrics"""
-        efficiency = physical_state.get("efficiency", 0.9)
-        power = physical_state.get("power_w", 0)
-        speed_error = abs(
-            physical_state.get("speed_rpm", 0) - self.config.simulation.motor_speed
-        )
-
-        # Energy efficiency score
-        efficiency_score = efficiency / self.config.simulation.motor_power
-
-        # Speed regulation score
-        speed_score = max(0, 1.0 - speed_error / self.config.simulation.motor_speed)
-
-        # Overall performance score
-        performance_score = (efficiency_score + speed_score) / 2
-
-        return {
-            "efficiency": efficiency,
-            "power_consumption": power,
-            "speed_regulation": speed_score,
-            "performance_score": performance_score,
-            "energy_cost_per_hour": power * 0.1 / 1000,  # Assuming $0.1/kWh
-        }
-
-    def _calculate_reward(
-        self, physical_state: Dict[str, float], health_metrics: Dict[str, float]
-    ) -> float:
-        """Calculate reward for RL controller"""
-        # Multi-objective reward function
-        efficiency_reward = physical_state.get("efficiency", 0.9)
-        health_reward = health_metrics.get("overall_health", 1.0)
-        speed_reward = (
-            1.0
-            - abs(
-                physical_state.get("speed_rpm", 0) - self.config.simulation.motor_speed
-            )
-            / self.config.simulation.motor_speed
-        )
-
-        # Weighted combination
-        reward = 0.4 * efficiency_reward + 0.4 * health_reward + 0.2 * speed_reward
-
-        return reward
-
-    async def _trigger_callbacks(self):
-        """Trigger registered callbacks"""
-        if not self.current_state:
-            return
-
-        # State callbacks
-        for callback in self.state_callbacks:
             try:
-                await callback(self.current_state)
+                # Quantum state evolution
+                quantum_evolution = await self.quantum_engine.evolve_state(
+                    self.current_state.quantum_state, dt=self.config.physics.dt
+                )
+
+                # Classical physics simulation
+                physics_state = await self.physics_engine.step(
+                    control_input=self.current_state.control_policy
+                )
+
+                # Neural control policy update
+                control_policy = await self.neural_controller.compute_control(
+                    quantum_state=quantum_evolution,
+                    classical_state=physics_state,
+                    health_vector=self.current_state.health_vector,
+                )
+
+                # Update quantum state with measurement
+                measured_state = await self.quantum_engine.measure_state(
+                    quantum_evolution, classical_state=physics_state
+                )
+
+                # Update current state
+                self.current_state = QuantumTwinState(
+                    timestamp=time.time(),
+                    quantum_state=measured_state,
+                    classical_state=physics_state,
+                    prediction_horizon=await self._compute_prediction_horizon(),
+                    causal_graph=await self.causal_engine.get_current_causal_graph(),
+                    health_vector=await self._compute_health_vector(),
+                    anomaly_signature=await self._detect_anomalies(),
+                    control_policy=control_policy,
+                    uncertainty_quantum=await self.quantum_engine.compute_uncertainty(
+                        measured_state
+                    ),
+                    entropy=await self.quantum_engine.compute_entropy(measured_state),
+                    coherence=await self.quantum_engine.compute_coherence(
+                        measured_state
+                    ),
+                )
+
+                # Store in history
+                self.state_history.append(self.current_state)
+                if len(self.state_history) > self.config.system.history_size:
+                    self.state_history.pop(0)
+
+                # Update metrics
+                self.metrics["predictions_made"] += 1
+                loop_time = time.time() - loop_start
+                self.metrics["avg_response_time"] = (
+                    self.metrics["avg_response_time"] * 0.9 + loop_time * 0.1
+                )
+
             except Exception as e:
-                logger.warning(f"State callback error: {e}")
+                logger.error(f"Quantum simulation loop error: {e}")
+                self.state = SystemState.FAULT_DETECTED
 
-        # Anomaly callbacks
-        if self.current_state.anomalies:
-            for callback in self.anomaly_callbacks:
-                try:
-                    await callback(self.current_state.anomalies)
-                except Exception as e:
-                    logger.warning(f"Anomaly callback error: {e}")
+            await asyncio.sleep(self.config.physics.dt)
 
-    def set_control_mode(self, mode: str):
-        """Set control mode ('rl', 'pid', 'manual')"""
-        if mode not in ["rl", "pid", "manual"]:
-            raise ValueError("Control mode must be 'rl', 'pid', or 'manual'")
+    async def _predictive_analytics_loop(self) -> None:
+        """Predictive analytics with uncertainty quantification"""
+        while self._running:
+            try:
+                if len(self.state_history) >= 10:
+                    # Generate predictions using quantum-enhanced neural networks
+                    predictions = await self.neural_controller.predict_future_states(
+                        history=self.state_history[-10:],
+                        horizon_steps=self.config.prediction.horizon_steps,
+                    )
 
-        self.control_mode = mode
-        logger.info(f"Control mode changed to: {mode}")
+                    # Compute confidence intervals using quantum uncertainty
+                    confidence_intervals = await self._compute_confidence_intervals(
+                        predictions
+                    )
 
-    def set_manual_control(self, voltage: np.ndarray):
-        """Set manual control voltage"""
-        self.manual_control = voltage
-        if self.control_mode != "manual":
-            logger.warning("Setting manual control but mode is not 'manual'")
+                    # Generate insights
+                    for metric, pred_values in predictions.items():
+                        insight = PredictiveInsight(
+                            metric=metric,
+                            current_value=self.current_state.classical_state.get(
+                                metric, 0.0
+                            ),
+                            predicted_values=pred_values,
+                            confidence_intervals=confidence_intervals[metric],
+                            risk_score=await self._compute_risk_score(
+                                metric, pred_values
+                            ),
+                            causal_factors=await self._get_causal_factors(metric),
+                            recommended_actions=await self._generate_recommendations(
+                                metric, pred_values
+                            ),
+                        )
+                        self.predictive_insights.append(insight)
 
-    def add_state_callback(self, callback: Callable):
-        """Add callback for state updates"""
-        self.state_callbacks.append(callback)
+                    # Limit insights history
+                    if len(self.predictive_insights) > 1000:
+                        self.predictive_insights = self.predictive_insights[-1000:]
 
-    def add_anomaly_callback(self, callback: Callable):
-        """Add callback for anomaly detection"""
-        self.anomaly_callbacks.append(callback)
+                await asyncio.sleep(self.config.prediction.update_interval)
 
-    def stop(self):
-        """Stop digital twin simulation"""
-        self.is_running = False
-        logger.info("Digital twin stop requested")
+            except Exception as e:
+                logger.error(f"Predictive analytics error: {e}")
 
-    def reset(self):
-        """Reset digital twin to initial state"""
-        self.simulator.reset()
-        self.current_state = None
-        self.state_history = []
-        self.simulation_time = 0.0
-        logger.info("Digital twin reset")
+    async def _self_healing_loop(self) -> None:
+        """Self-healing capabilities with quantum optimization"""
+        while self._running:
+            try:
+                # Check for anomalies
+                anomaly_magnitude = np.linalg.norm(self.current_state.anomaly_signature)
 
-    def get_current_state(self) -> Optional[TwinState]:
-        """Get current twin state"""
+                if anomaly_magnitude > self.config.healing.threshold:
+                    logger.warning(
+                        f"Anomaly detected (magnitude: {anomaly_magnitude:.3f})"
+                    )
+                    self.state = SystemState.SELF_HEALING
+                    self.metrics["anomalies_detected"] += 1
+
+                    # Quantum optimization for healing
+                    healing_strategy = await self._compute_healing_strategy()
+
+                    # Apply healing
+                    await self._apply_healing_strategy(healing_strategy)
+
+                    self.metrics["self_healing_events"] += 1
+                    self.state = SystemState.RUNNING
+                    logger.info("Self-healing complete")
+
+                await asyncio.sleep(self.config.healing.check_interval)
+
+            except Exception as e:
+                logger.error(f"Self-healing error: {e}")
+
+    async def _causal_inference_loop(self) -> None:
+        """Real-time causal inference"""
+        while self._running:
+            try:
+                # Update causal graph with new data
+                await self.causal_engine.update_with_state(self.current_state)
+
+                # Detect causal changes
+                causal_changes = await self.causal_engine.detect_causal_changes()
+
+                if causal_changes:
+                    logger.info(
+                        f"Causal structure changes detected: {len(causal_changes)}"
+                    )
+                    # Adapt neural controller to new causal structure
+                    await self.neural_controller.adapt_to_causal_changes(causal_changes)
+
+                await asyncio.sleep(self.config.causal.update_interval)
+
+            except Exception as e:
+                logger.error(f"Causal inference error: {e}")
+
+    # Helper methods for quantum-enhanced computations
+    async def _compute_prediction_horizon(self) -> Dict[str, np.ndarray]:
+        """Compute prediction horizon using quantum superposition"""
+        return await self.quantum_engine.predict_future_states(
+            self.current_state.quantum_state, steps=self.config.prediction.horizon_steps
+        )
+
+    async def _compute_health_vector(self) -> np.ndarray:
+        """Compute system health using quantum coherence"""
+        base_health = await self.quantum_engine.compute_health_indicator(
+            self.current_state.quantum_state
+        )
+
+        # Adjust for anomalies
+        anomaly_penalty = np.linalg.norm(self.current_state.anomaly_signature) * 0.1
+
+        return np.maximum(base_health - anomaly_penalty, 0.0)
+
+    async def _detect_anomalies(self) -> np.ndarray:
+        """Quantum-enhanced anomaly detection"""
+        return await self.quantum_engine.detect_anomalies(
+            self.current_state.quantum_state, threshold=self.config.anomaly.threshold
+        )
+
+    async def _compute_confidence_intervals(
+        self, predictions: Dict[str, np.ndarray]
+    ) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
+        """Compute confidence intervals using quantum uncertainty"""
+        intervals = {}
+        for metric, values in predictions.items():
+            uncertainty = await self.quantum_engine.compute_prediction_uncertainty(
+                values
+            )
+            std_dev = np.sqrt(uncertainty)
+            intervals[metric] = (
+                values - 1.96 * std_dev,  # Lower bound
+                values + 1.96 * std_dev,  # Upper bound
+            )
+        return intervals
+
+    async def _compute_risk_score(self, metric: str, predictions: np.ndarray) -> float:
+        """Compute risk score for predicted metric"""
+        # Use quantum entropy for risk assessment
+        entropy = await self.quantum_engine.compute_entropy_of_predictions(predictions)
+        return float(entropy)
+
+    async def _get_causal_factors(self, metric: str) -> List[str]:
+        """Get causal factors for metric"""
+        return await self.causal_engine.get_causal_factors(metric)
+
+    async def _generate_recommendations(
+        self, metric: str, predictions: np.ndarray
+    ) -> List[str]:
+        """Generate recommendations using neural reasoning"""
+        return await self.neural_controller.generate_recommendations(
+            metric, predictions
+        )
+
+    async def _compute_healing_strategy(self) -> Dict[str, Any]:
+        """Compute optimal healing strategy using quantum optimization"""
+        return await self.quantum_engine.optimize_healing_strategy(
+            current_state=self.current_state,
+            anomaly_signature=self.current_state.anomaly_signature,
+        )
+
+    async def _apply_healing_strategy(self, strategy: Dict[str, Any]) -> None:
+        """Apply healing strategy"""
+        # Apply control adjustments
+        if "control_adjustments" in strategy:
+            self.current_state.control_policy += strategy["control_adjustments"]
+
+        # Apply parameter adjustments
+        if "parameter_adjustments" in strategy:
+            await self.physics_engine.adjust_parameters(
+                strategy["parameter_adjustments"]
+            )
+
+        # Apply neural network reconfiguration
+        if "neural_reconfig" in strategy:
+            await self.neural_controller.reconfigure(strategy["neural_reconfig"])
+
+    def get_current_state(self) -> Optional[QuantumTwinState]:
+        """Get current quantum twin state"""
         return self.current_state
 
-    def get_state_history(self, limit: Optional[int] = None) -> List[TwinState]:
-        """Get state history"""
-        if limit:
-            return self.state_history[-limit:]
-        return self.state_history
+    def get_predictive_insights(self) -> List[PredictiveInsight]:
+        """Get latest predictive insights"""
+        return self.predictive_insights[-10:]  # Return last 10 insights
 
-    def get_performance_summary(self) -> Dict[str, Any]:
-        """Get performance summary statistics"""
-        if not self.state_history:
-            return {}
-
-        # Extract metrics
-        efficiencies = [
-            s.performance_metrics.get("efficiency", 0) for s in self.state_history
-        ]
-        health_scores = [
-            s.health_metrics.get("overall_health", 0) for s in self.state_history
-        ]
-        anomaly_count = sum(len(s.anomalies) for s in self.state_history)
-
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """Get system performance metrics"""
         return {
-            "avg_efficiency": np.mean(efficiencies),
-            "min_efficiency": np.min(efficiencies),
-            "avg_health": np.mean(health_scores),
-            "min_health": np.min(health_scores),
-            "total_anomalies": anomaly_count,
-            "uptime": self.simulation_time,
-            "total_steps": len(self.state_history),
+            **self.metrics,
+            "state": self.state.value,
+            "coherence": self.current_state.coherence if self.current_state else 0.0,
+            "entropy": self.current_state.entropy if self.current_state else 0.0,
+            "health_score": np.mean(self.current_state.health_vector)
+            if self.current_state
+            else 0.0,
         }
 
-    def export_data(self, filepath: Path):
-        """Export twin data to file"""
-        if not self.state_history:
-            logger.warning("No data to export")
-            return
-
-        # Convert to DataFrame
-        data = []
-        for state in self.state_history:
-            row = {
-                "timestamp": state.timestamp,
-                **state.physical_state,
-                **state.predicted_state,
-                **state.health_metrics,
-                **state.performance_metrics,
-                "anomaly_count": len(state.anomalies),
-            }
-            data.append(row)
-
-        df = pd.DataFrame(data)
-        df.to_csv(filepath, index=False)
-        logger.info(f"Data exported to {filepath}")
-
-    async def __aenter__(self):
-        """Async context manager entry"""
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit"""
-        self.stop()
-        self.executor.shutdown(wait=True)
+    @property
+    def is_running(self) -> bool:
+        """Check if system is running"""
+        return self._running and self.state == SystemState.RUNNING

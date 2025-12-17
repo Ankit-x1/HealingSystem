@@ -1,67 +1,78 @@
-# Core dependencies
-numpy>=1.24.0
-scipy>=1.10.0
-pandas>=2.0.0
-matplotlib>=3.7.0
-seaborn>=0.12.0
+# PhoenixDT Production Dependencies
+# Apple/Tesla-grade quantum-enhanced industrial digital twin
 
-# Machine Learning
-torch>=2.0.0
-torchvision>=0.15.0
-scikit-learn>=1.3.0
-xgboost>=1.7.0
-lightgbm>=3.3.0
+# Core Scientific Computing - Latest Stable
+numpy>=1.26.0
+scipy>=1.13.0
+pandas>=2.2.0
 
-# Reinforcement Learning
-stable-baselines3>=2.0.0
-gymnasium>=0.28.0
-ray[rllib]>=2.5.0
+# Quantum & ML Frameworks - Production Ready
+torch>=2.3.0
+torchvision>=0.18.0
+scikit-learn>=1.5.0
 
-# Causal Inference
-dowhy>=0.11.0
-econml>=0.13.0
-causalml>=0.12.0
+# Advanced ML & Optimization
+stable-baselines3>=2.3.0
+gymnasium>=0.29.0
+xgboost>=2.1.0
+lightgbm>=4.5.0
+optuna>=3.5.0
+hyperopt>=0.2.7
 
-# Industrial Communication
+# Causal Inference & Graph Analysis
+dowhy>=0.12.0
+econml>=0.14.0
+causalml>=0.14.0
+networkx>=3.2.1
+
+# Industrial Communication - Industrial Grade
 opcua-asyncio>=1.0.0
-pymodbus>=3.4.0
-mtconnect>=1.2.0
+pymodbus>=3.6.0
 
-# Dashboard & Visualization
-streamlit>=1.25.0
-plotly>=5.15.0
-dash>=2.11.0
-bokeh>=3.2.0
-three.js>=0.1.0
+# Web Framework & API - High Performance
+fastapi>=0.112.0
+uvicorn[standard]>=0.30.0
+websockets>=13.0
+python-multipart>=0.0.9
 
-# Monitoring & Observability
-prometheus-client>=0.17.0
+# Data Visualization & Dashboard - Production Ready
+plotly>=5.22.0
+
+# Monitoring & Observability - Enterprise Grade
+prometheus-client>=0.20.0
 grafana-api>=1.0.3
-psutil>=5.9.0
+psutil>=6.0.0
 
-# Deployment & Infrastructure
-docker>=6.1.0
-kubernetes>=27.2.0
-fastapi>=0.100.0
-uvicorn>=0.23.0
-pydantic>=2.0.0
-
-# Utilities
-pydantic-settings>=2.0.0
+# Configuration & Utilities - Production Optimized
+pydantic>=2.8.0
+pydantic-settings>=2.4.0
 python-dotenv>=1.0.0
 loguru>=0.7.0
-typer>=0.9.0
-rich>=13.4.0
+typer>=0.12.0
+rich>=13.8.0
+aiofiles>=24.1.0
 
-# Testing
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-pytest-cov>=4.1.0
-hypothesis>=6.82.0
+# Development & Testing - Apple/Tesla Standards
+pytest>=8.3.0
+pytest-asyncio>=0.23.0
+pytest-cov>=5.0.0
+pytest-xdist>=3.6.0
+coverage>=7.6.0
+black>=24.8.0
+isort>=5.13.0
+mypy>=1.11.0
+ruff>=0.6.0
+pre-commit>=3.8.0
+bandit>=1.7.5
+safety>=3.0.0
 
-# Development
-black>=23.7.0
-isort>=5.12.0
-flake8>=6.0.0
-mypy>=1.5.0
-pre-commit>=3.3.0
+# Deployment & Containerization - Production Ready
+kubernetes>=30.0.0
+helm>=3.14.0
+docker>=6.1.0
+
+# Performance & Profiling
+ray[rllib]>=2.30.0
+
+# Security & Hardening
+cryptography>=41.0.0

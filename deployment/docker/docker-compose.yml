@@ -1,124 +1,123 @@
-version: '3.8'
+version: '3.9'
 
 services:
-  phoenixdt-core:
+  # Main PhoenixDT Application
+  phoenixdt:
     build:
       context: ../..
       dockerfile: deployment/docker/Dockerfile
-    container_name: phoenixdt-core
+      target: production
+    container_name: phoenixdt-app
     ports:
-      - "8000:8000"  # REST API
-      - "4840:4840"  # OPC-UA
-      - "9090:9090"  # Prometheus
+      - "8000:8000"  # FastAPI REST API & Dashboard
+      - "4840:4840"  # OPC-UA Server
     volumes:
-      - ../../data:/app/data
-      - ../../logs:/app/logs
-      - ../../configs:/app/configs
+      - phoenixdt-data:/app/data
+      - phoenixdt-logs:/app/logs
+      - phoenixdt-config:/app/config
     environment:
       - PHOENIXDT_LOG_LEVEL=INFO
       - PHOENIXDT_DATA_DIR=/app/data
-      - PHOENIXDT_INTERFACE__API_PORT=8000
-      - PHOENIXDT_INTERFACE__OPCUA_PORT=4840
-      - PHOENIXDT_INTERFACE__PROMETHEUS_PORT=9090
+      - PHOENIXDT_HOST=0.0.0.0
+      - PHOENIXDT_PORT=8000
     networks:
       - phoenixdt-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
-  phoenixdt-dashboard:
-    build:
-      context: ../..
-      dockerfile: deployment/docker/Dockerfile
-    container_name: phoenixdt-dashboard
-    ports:
-      - "8501:8501"  # Streamlit dashboard
-    volumes:
-      - ../../data:/app/data
-      - ../../logs:/app/logs
-    environment:
-      - PHOENIXDT_LOG_LEVEL=INFO
-      - PHOENIXDT_DATA_DIR=/app/data
-      - PHOENIXDT_INTERFACE__DASHBOARD_PORT=8501
-    command: ["streamlit", "run", "src/phoenixdt/dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
-    networks:
-      - phoenixdt-network
-    restart: unless-stopped
-    depends_on:
-      - phoenixdt-core
-
+  # Prometheus for Metrics Collection
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.50.0
     container_name: phoenixdt-prometheus
     ports:
-      - "9091:9090"
+      - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
+      - '--storage.tsdb.retention.time=30d'
       - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
     networks:
       - phoenixdt-network
     restart: unless-stopped
+    depends_on:
+      - phoenixdt
 
+  # Grafana for Visualization
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.2.0
     container_name: phoenixdt-grafana
     ports:
       - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=phoenixdt123
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
     networks:
       - phoenixdt-network
     restart: unless-stopped
     depends_on:
       - prometheus
 
+  # Redis for Caching and Session Management
   redis:
-    image: redis:7-alpine
+    image: redis:7.2-alpine
     container_name: phoenixdt-redis
     ports:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     networks:
       - phoenixdt-network
     restart: unless-stopped
 
+  # Nginx Reverse Proxy (Optional)
   nginx:
-    image: nginx:alpine
+    image: nginx:1.25-alpine
     container_name: phoenixdt-nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     networks:
       - phoenixdt-network
     restart: unless-stopped
     depends_on:
-      - phoenixdt-core
-      - phoenixdt-dashboard
+      - phoenixdt
+      - grafana
 
 volumes:
+  phoenixdt-data:
+    driver: local
+  phoenixdt-logs:
+    driver: local
+  phoenixdt-config:
+    driver: local
   prometheus-data:
+    driver: local
   grafana-data:
+    driver: local
   redis-data:
+    driver: local
 
 networks:
   phoenixdt-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
