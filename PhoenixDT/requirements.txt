@@ -1,0 +1,62 @@
+# Core dependencies - Python 3.12.2 compatible
+numpy>=1.24.0
+scipy>=1.10.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Machine Learning - Python 3.12.2 compatible
+torch>=2.0.0
+torchvision>=0.15.0
+scikit-learn>=1.3.0
+xgboost>=1.7.0
+lightgbm>=3.3.0
+
+# Reinforcement Learning - Python 3.12.2 compatible
+stable-baselines3>=2.0.0
+gymnasium>=0.28.0
+ray>=2.5.0
+
+# Causal Inference - Python 3.12.2 compatible
+dowhy>=0.11.0
+econml>=0.13.0
+causalml>=0.12.0
+
+# Industrial Communication - Python 3.12.2 compatible
+asyncua>=1.0.0
+pymodbus>=3.4.0
+
+# Dashboard & Visualization - Python 3.12.2 compatible
+streamlit>=1.25.0
+plotly>=5.15.0
+dash>=2.11.0
+bokeh>=3.2.0
+
+# Monitoring & Observability - Python 3.12.2 compatible
+prometheus-client>=0.17.0
+psutil>=5.9.0
+
+# Deployment & Infrastructure - Python 3.12.2 compatible
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Utilities - Python 3.12.2 compatible
+python-dotenv>=1.0.0
+loguru>=0.7.0
+typer>=0.9.0
+rich>=13.4.0
+
+# Testing - Python 3.12.2 compatible
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+hypothesis>=6.82.0
+
+# Development - Python 3.12.2 compatible
+black>=23.7.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.5.0
+pre-commit>=3.3.0
